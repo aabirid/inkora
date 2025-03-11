@@ -4,7 +4,7 @@ import 'package:inkora/widgets/author_card.dart';
 class AuthorsResult extends StatelessWidget {
   final String query;
 
-  AuthorsResult({required this.query});
+  AuthorsResult({super.key, required this.query});
 
   final List<Map<String, dynamic>> authors = [
     {"name": "Daydreamer", "profile-picture": 'assets/images/book_cover.jpeg'},

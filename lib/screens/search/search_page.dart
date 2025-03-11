@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:inkora/screens/search/search_results.dart';
 
 class SearchPage extends StatefulWidget {
+  const SearchPage({super.key});
+
   @override
   _SearchPageState createState() => _SearchPageState();
 }
 
 class _SearchPageState extends State<SearchPage> {
-  TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
   final List<Map<String, String>> genres = [
     {"name": "Fantasy", "image": "assets/images/fantasy.jpeg"},

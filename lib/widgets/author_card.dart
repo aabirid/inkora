@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AuthorCard extends StatelessWidget {
   final Map<String, dynamic> author;
 
-  const AuthorCard({required this.author});
+  const AuthorCard({super.key, required this.author});
 
   @override
   Widget build(BuildContext context) {

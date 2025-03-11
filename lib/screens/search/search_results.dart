@@ -6,7 +6,7 @@ import 'package:inkora/screens/search/authors_result.dart';
 class SearchResultsPage extends StatelessWidget {
   final String query;
 
-  SearchResultsPage({required this.query});
+  const SearchResultsPage({super.key, required this.query});
 
   @override
   Widget build(BuildContext context) {

@@ -7,7 +7,7 @@ import 'package:inkora/widgets/book_card.dart';
 class BooklistOverview extends StatelessWidget {
   final Map<String, dynamic> booklist;
 
-  const BooklistOverview({Key? key, required this.booklist}) : super(key: key);
+  const BooklistOverview({super.key, required this.booklist});
 
   @override
   Widget build(BuildContext context) {

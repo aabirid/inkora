@@ -5,7 +5,7 @@ import 'package:inkora/widgets/book_card.dart';
 class BooksResult extends StatelessWidget {
   final String query;
 
-  BooksResult({required this.query});
+  BooksResult({super.key, required this.query});
 
   final List<Book> books = [
     Book(
