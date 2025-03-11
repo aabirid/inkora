@@ -5,40 +5,77 @@ class LibraryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Sample books to display
-    final books = [
-      {'title': 'Book 1', 'author': 'Author A'},
-      {'title': 'Book 2', 'author': 'Author B'},
-      {'title': 'Book 3', 'author': 'Author C'},
-      {'title': 'Book 4', 'author': 'Author D'},
-    ];
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [          
+          const SizedBox(height: 12),
+          _buildSectionTitle("Saved Books"),
+          _buildBookGrid(),
+          const SizedBox(height: 20),
+          _buildSectionTitle("Saved Booklists"),
+          _buildBookGrid(),
+        ],
+      ),
+    );
+  }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Library'),
-        backgroundColor: Colors.green,
+  // Widget pour afficher le titre de chaque section
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const Icon(Icons.arrow_forward_ios, size: 16),
+        ],
       ),
-      body: ListView.builder(
-        itemCount: books.length,
-        itemBuilder: (context, index) {
-          final book = books[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-            child: ListTile(
-              title: Text(book['title']!),
-              subtitle: Text(book['author']!),
-              leading: Icon(Icons.book), // Optional icon for each book
-              trailing: IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: () {
-                  // Handle book deletion (optional)
-                  print('Delete ${book['title']}');
-                },
-              ),
-            ),
-          );
-        },
+    );
+  }
+
+  // Widget pour afficher la grille des livres
+  Widget _buildBookGrid() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3, // 3 colonnes comme sur ton design
+        childAspectRatio: 0.7,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
       ),
+      itemCount: 6, 
+      itemBuilder: (context, index) {
+        return _buildBookItem();
+      },
+    );
+  }
+
+  // Widget pour afficher un livre
+  Widget _buildBookItem() {
+    return Column(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset(
+            "assets/images/book_cover3.jpeg", 
+            width: 100,
+            height: 140,
+            fit: BoxFit.cover,
+          ),
+        ),
+        const SizedBox(height: 3),
+        const Text(
+          "Fantasy Besties",
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }
