@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:inkora/screens/auth/login_page.dart';
 import 'package:inkora/theme/theme.dart';
 import 'package:inkora/screens/forum/forum_page.dart';
 import 'package:inkora/screens/home/home_page.dart';
@@ -58,6 +59,7 @@ class _RootPageState extends State<RootPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false, 
         title: const Text('Inkora'),
         actions: [
           IconButton(
@@ -100,6 +102,15 @@ class _RootPageState extends State<RootPage> {
         ],
       ),
       body: pages[currentPage],
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+          );
+        },
+        child: const Icon(Icons.arrow_forward),
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentPage,
         onTap: (int index) {
