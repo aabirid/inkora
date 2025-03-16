@@ -55,7 +55,7 @@ dev_dependencies:
 flutter:
   assets:
     - assets/images/
-    - assets/icons/
+    - assets/fonts/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
@@ -75,11 +75,13 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
+  fonts:
+  - family: MarkaziText
+    fonts:
+      - asset: assets/fonts/MarkaziText-Regular.ttf
+      - asset: assets/fonts/MarkaziText-Bold.ttf
+      - asset: assets/fonts/MarkaziText-SemiBold.ttf
+      - asset: assets/fonts/MarkaziText-Medium.ttf
   #         style: italic
   #   - family: Trajan Pro
   #     fonts:
