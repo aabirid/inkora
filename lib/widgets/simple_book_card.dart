@@ -17,12 +17,12 @@ class SimpleBookCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             child: Image.asset(
               book.coverImage,
-              width: 100,
-              height: 140,
+              width: 95,
+              height: 130,
               fit: BoxFit.cover,
             ),
           ),
-          const SizedBox(height: 4),
+         // const SizedBox(height: 8),
           Text(
             book.title,
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),

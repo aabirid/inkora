@@ -94,6 +94,16 @@ class HomePage extends StatelessWidget {
       chapters: 30,
       status: "Completed",
     ),
+     Book(
+      id: "18",
+      title: "Sci-Fi Odyssey",
+      author: "Jane Doe",
+      coverImage: "assets/images/book_cover2.jpeg",
+      description: "Explore the galaxies in this sci-fi epic...",
+      rating: 4.2,
+      chapters: 30,
+      status: "Completed",
+    ),
     Book(
       id: "9",
       title: "Fantasy Besties",
@@ -116,7 +126,7 @@ class HomePage extends StatelessWidget {
     ),
   ];
 
-   HomePage({super.key});
+  HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -159,10 +169,11 @@ class HomePage extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 3, // Dynamic columns
-        childAspectRatio: 0.7,
+        crossAxisCount:
+            MediaQuery.of(context).size.width > 600 ? 4 : 3, // Dynamic columns
+        childAspectRatio: 0.6,
         crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
+        mainAxisSpacing: 15,
       ),
       itemCount: books.length,
       itemBuilder: (context, index) {

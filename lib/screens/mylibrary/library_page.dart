@@ -45,7 +45,7 @@ class LibraryPage extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3, // 3 colonnes comme sur ton design
-        childAspectRatio: 0.7,
+        childAspectRatio: 0.55,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
       ),
