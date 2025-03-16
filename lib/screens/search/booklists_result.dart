@@ -1,37 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:inkora/widgets/booklist_card.dart';
+import 'package:inkora/models/booklist.dart'; 
 
 class BooklistsResult extends StatelessWidget {
   final String query;
 
   BooklistsResult({super.key, required this.query});
 
-  final List<Map<String, dynamic>> booklists = [
-    {
-      "title": "Best Books of the 2000s",
-      "likes": 507,
-      "books": 30,
-      "coverImage": "assets/images/book_cover.jpeg"
-    },
-    {
-      "title": "Top Fantasy Reads",
-      "likes": 6049,
-      "books": 25,
-      "coverImage": "assets/images/book_cover3.jpeg"
-    },
-    {
-      "title": "Sci-Fi Must Reads",
-      "likes": 323,
-      "books": 18,
-      "coverImage": "assets/images/book_cover2.jpeg"
-    },
+  final List<Booklist> booklists = [
+    Booklist(
+      id: "1",
+      title: "Best Books of the 2000s",
+      coverImage: "assets/images/book_cover.jpeg",
+      likes: 507,
+      booksCount: 30,
+    ),
+    Booklist(
+      id: "2",
+      title: "Top Fantasy Reads",
+      coverImage: "assets/images/book_cover3.jpeg",
+      likes: 6049,
+      booksCount: 25,
+    ),
+    Booklist(
+      id: "3",
+      title: "Sci-Fi Must Reads",
+      coverImage: "assets/images/book_cover2.jpeg",
+      likes: 323,
+      booksCount: 18,
+    ),
   ];
 
   @override
   Widget build(BuildContext context) {
-    // Filter booklists based on the search query
-    List<Map<String, dynamic>> filteredBooklists = booklists.where((booklist) {
-      return booklist["title"].toLowerCase().contains(query.toLowerCase());
+    List<Booklist> filteredBooklists = booklists.where((booklist) {
+      return booklist.title.toLowerCase().contains(query.toLowerCase());
     }).toList();
 
     return filteredBooklists.isEmpty

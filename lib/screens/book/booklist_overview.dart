@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:inkora/models/book.dart';
+import 'package:inkora/models/booklist.dart';
 import 'package:inkora/screens/search/search_page.dart';
 import 'package:inkora/widgets/booklist_card.dart';
 import 'package:inkora/widgets/book_card.dart';
 
 class BooklistOverview extends StatelessWidget {
-  final Map<String, dynamic> booklist;
+  final Booklist booklist; // Update to Booklist type
 
   const BooklistOverview({super.key, required this.booklist});
 
@@ -65,7 +66,6 @@ class BooklistOverview extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.share_rounded),
             onPressed: () {
-              // TODO: Implement sharing functionality
             },
           ),
         ],

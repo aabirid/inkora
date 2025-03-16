@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:inkora/models/book.dart';
+import 'package:inkora/models/booklist.dart';
 import 'package:inkora/screens/book/book_overview.dart';
+import 'package:inkora/screens/book/booklist_overview.dart';
 import 'package:inkora/screens/profile/profile_edit_page.dart';
 import 'package:inkora/widgets/simple_book_card.dart';
+import 'package:inkora/widgets/simple_booklist_card.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -45,7 +48,7 @@ class _ProfilePageState extends State<ProfilePage> {
       chapters: 30,
       status: "Completed",
     ),
-     Book(
+    Book(
       id: "18",
       title: "Sci-Fi Odyssey",
       author: "Jane Doe",
@@ -57,36 +60,22 @@ class _ProfilePageState extends State<ProfilePage> {
     ),
   ];
 
-  final List<Book> myBooklists = [
-    Book(
-      id: "3",
-      title: "Romantic Vibes",
-      author: "Emily Heart",
+  final List<Booklist> myBooklists = [
+    Booklist(
+      id: "1",
+      title: "My Fantasy Collection",
+      coverImage: "assets/images/book_cover7.jpeg",
+      likes: 230,
+      booksCount: 15,
+      // books: myBooks,
+    ),
+    Booklist(
+      id: "2",
+      title: "Top Mystery Picks",
       coverImage: "assets/images/book_cover4.jpeg",
-      description: "A heartwarming love story...",
-      rating: 4.8,
-      chapters: 20,
-      status: "Completed",
-    ),
-    Book(
-      id: "9",
-      title: "Fantasy Besties",
-      author: "John Doe",
-      coverImage: "assets/images/book_cover.jpeg",
-      description: "A thrilling fantasy adventure...",
-      rating: 4.5,
-      chapters: 25,
-      status: "Ongoing",
-    ),
-    Book(
-      id: "22",
-      title: "Sci-Fi Odyssey",
-      author: "Jane Doe",
-      coverImage: "assets/images/book_cover2.jpeg",
-      description: "Explore the galaxies in this sci-fi epic...",
-      rating: 4.2,
-      chapters: 30,
-      status: "Completed",
+      likes: 340,
+      booksCount: 10,
+      // books: myBooks,
     ),
   ];
 
@@ -219,7 +208,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildBookGrid(BuildContext context, List<Book> books) {
+  Widget _buildBookGrid(BuildContext context, List<dynamic> items) {
     return GridView.builder(
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 3,
@@ -227,19 +216,37 @@ class _ProfilePageState extends State<ProfilePage> {
         crossAxisSpacing: 10,
         mainAxisSpacing: 15,
       ),
-      itemCount: books.length,
+      itemCount: items.length,
       itemBuilder: (context, index) {
-        return SimpleBookCard(
-          book: books[index],
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => BookOverview(book: books[index]),
-              ),
-            );
-          },
-        );
+        if (items is List<Book>) {
+          // When showing books
+          return SimpleBookCard(
+            book: items[index],
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BookOverview(book: items[index]),
+                ),
+              );
+            },
+          );
+        } else if (items is List<Booklist>) {
+          // When showing booklists
+          return SimpleBooklistCard(
+            booklist: items[index],
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BooklistOverview(booklist: items[index]),
+                ),
+              );
+            },
+          );
+        } else {
+          return Container(); // Default case
+        }
       },
     );
   }

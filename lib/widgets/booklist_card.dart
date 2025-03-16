@@ -1,78 +1,75 @@
 import 'package:flutter/material.dart';
 import 'package:inkora/screens/book/booklist_overview.dart';
+import 'package:inkora/models/booklist.dart'; 
 
 class BooklistCard extends StatelessWidget {
-  final Map<String, dynamic> booklist;
+  final Booklist booklist;
 
   const BooklistCard({super.key, required this.booklist});
 
   @override
   Widget build(BuildContext context) {
-     return GestureDetector(
+    return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => BooklistOverview(booklist: booklist),
+            builder: (context) => BooklistOverview(booklist: booklist), // Pass Booklist object
           ),
         );
       },
       child: Container(
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        borderRadius:
-            BorderRadius.circular(12), // Rounded corners for the card itself
-      ),
-      child: Row(        
-        children: [
-          // Image with border radius
-          ClipRRect(
-            borderRadius:
-                BorderRadius.circular(10.0), // Apply border radius to the image
-            child: Image.asset(
-              booklist["coverImage"] ?? 'assets/default_cover.png',
-              width: 75,
-              height: 120,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Icon(Icons.broken_image, size: 50);
-              },
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12), // Rounded corners for the card itself
+        ),
+        child: Row(
+          children: [
+            // Image with border radius
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10.0), // Apply border radius to the image
+              child: Image.asset(
+                booklist.coverImage, // Access coverImage from Booklist object
+                width: 75,
+                height: 120,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(Icons.broken_image, size: 50); // Error handling
+                },
+              ),
             ),
-          ),
-          SizedBox(width: 10), // Add some space between the image and text
-          // Text section
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                booklist["title"] ?? 'Unknown Title',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 5),
-              Row(
-                children: [
-                  Icon(Icons.favorite,
-                      size: 16, color: Colors.grey), // Like icon
-                  SizedBox(width: 4), // Small spacing
-                  Text(
-                    "${booklist["likes"] ?? 0}",
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                  SizedBox(width: 12), // Space between like and book icons
-                  Icon(Icons.menu_book,
-                      size: 16, color: Colors.grey), 
-                  SizedBox(width: 4),
-                  Text(
-                    "${booklist["books"] ?? 0}",
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
+            const SizedBox(width: 10), // Add some space between the image and text
+            // Text section
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  booklist.title, // Access title from Booklist object
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    const Icon(Icons.favorite, size: 16, color: Colors.grey), // Like icon
+                    const SizedBox(width: 4), // Small spacing
+                    Text(
+                      "${booklist.likes}", // Access likes from Booklist object
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    const SizedBox(width: 12), // Space between like and book icons
+                    const Icon(Icons.menu_book, size: 16, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Text(
+                      "${booklist.booksCount}", // Access booksCount from Booklist object
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
-     );
+    );
   }
 }
