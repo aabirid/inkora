@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:inkora/screens/forum/chat_room_page.dart';
 
 class ForumPage extends StatelessWidget {
-  const ForumPage({Key? key}) : super(key: key);
+  const ForumPage({super.key});
 
   @override
   Widget build(BuildContext context) {

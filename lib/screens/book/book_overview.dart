@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:inkora/models/book.dart';
 import 'package:inkora/models/comment.dart';
+import 'package:inkora/screens/book/read_book_page.dart';
 
 class BookOverview extends StatefulWidget {
   final Book book;
 
-  const BookOverview({Key? key, required this.book}) : super(key: key);
+  const BookOverview({super.key, required this.book});
 
   @override
   _BookOverviewState createState() => _BookOverviewState();
@@ -65,48 +66,61 @@ class _BookOverviewState extends State<BookOverview> {
   }
 
   Widget _buildBookDetails() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.asset(
-            widget.book.coverImage,
-            width: 120,
-            height: 180,
-            fit: BoxFit.cover,
-          ),
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.asset(
+          widget.book.coverImage,
+          width: 120,
+          height: 180,
+          fit: BoxFit.cover,
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(widget.book.title,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Text("by ${widget.book.author}",
-                  style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic)),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.star, color: Colors.orange, size: 20),
-                  const SizedBox(width: 4),
-                  Text("${widget.book.rating}"),
-                  const SizedBox(width: 10),
-                  Icon(Icons.menu_book_rounded, color: Colors.grey, size: 20),
-                  const SizedBox(width: 5),
-                  Text("${widget.book.chapters} chapters"),
-                ],
-              ),
-              const SizedBox(height: 10),
-              _buildStatusTag(widget.book.status),
-            ],
-          ),
+      ),
+      const SizedBox(width: 16),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(widget.book.title,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text("by ${widget.book.author}",
+                style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.star, color: Colors.orange, size: 20),
+                const SizedBox(width: 4),
+                Text("${widget.book.rating}"),
+                const SizedBox(width: 10),
+                Icon(Icons.menu_book_rounded, color: Colors.grey, size: 20),
+                const SizedBox(width: 5),
+                Text("${widget.book.chapters} chapters"),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _buildStatusTag(widget.book.status),
+            const SizedBox(height: 10), // Add some spacing
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (BuildContext) {
+                    return ReadBookPage();
+                  },
+                ),
+              );
+              },
+              child: const Text("Read", style: TextStyle(fontSize: 16)),
+            ),
+          ],
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 
   Widget _buildStatusTag(String status) {
     Color tagColor = status == "Completed" ? Colors.green : Colors.blue;
