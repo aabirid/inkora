@@ -53,7 +53,7 @@ class BooklistCard extends StatelessWidget {
                     const Icon(Icons.favorite, size: 16, color: Colors.grey), // Like icon
                     const SizedBox(width: 4), // Small spacing
                     Text(
-                      "${booklist.likes}", // Access likes from Booklist object
+                      "${booklist.likesCount}", // Access likes from Booklist object
                       style: const TextStyle(fontSize: 14, color: Colors.grey),
                     ),
                     const SizedBox(width: 12), // Space between like and book icons

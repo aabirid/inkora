@@ -1,67 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:inkora/models/book.dart';
 import 'package:inkora/models/booklist.dart';
-import 'package:inkora/screens/book/book_overview.dart';
-import 'package:inkora/screens/book/booklist_overview.dart';
 import 'package:inkora/widgets/simple_book_card.dart';
 import 'package:inkora/widgets/simple_booklist_card.dart';
+import 'package:inkora/screens/book/book_overview.dart';
+import 'package:inkora/screens/book/booklist_overview.dart';
 
 class LibraryPage extends StatelessWidget {
   final List<Book> myBooks = [
     Book(
-      id: "1",
-      title: "Fantasy Besties",
-      author: "John Doe",
-      coverImage: "assets/images/book_cover6.jpeg",
-      description: "A fantasy adventure",
+      id: 1,
+      title: "The Alchemist",
+      author: "Paulo Coelho",
+      coverImage: "assets/images/book_cover7.jpeg",
+      description: "A journey to find one's destiny.",
       rating: 4.5,
-      chapters: 12,
-      status: "Ongoing",
-    ),
-    Book(
-      id: "2",
-      title: "Mystery Nights",
-      author: "Jane Doe",
-      coverImage: "assets/images/book_cover8.jpeg",
-      description: "A thrilling mystery",
-      rating: 4.8,
-      chapters: 8,
+      chapters: 15,
       status: "Completed",
     ),
     Book(
-      id: "3",
-      title: "Sci-Fi Legends",
-      author: "Sam Smith",
-      coverImage: "assets/images/book_cover5.jpeg",
-      description: "A space exploration story",
-      rating: 4.9,
-      chapters: 10,
-      status: "Ongoing",
+      id: 2,
+      title: "1984",
+      author: "George Orwell",
+      coverImage: "assets/images/book_cover6.jpeg",
+      description: "A dystopian future ruled by surveillance.",
+      rating: 4.8,
+      chapters: 24,
+      status: "Completed",
     ),
   ];
 
-  final List<Booklist> myBooklists = [];
-
-  LibraryPage({super.key}) {
-    myBooklists.addAll([
-      Booklist(
-        id: "1",
-        title: "My Fantasy Collection",
-        coverImage: "assets/images/book_cover7.jpeg",
-        likes: 230,
-        booksCount: 15,
-        books: myBooks,
-      ),
-      Booklist(
-        id: "2",
-        title: "Top Mystery Picks",
-        coverImage: "assets/images/book_cover4.jpeg",
-        likes: 340,
-        booksCount: 10,
-        books: myBooks,
-      ),
-    ]);
-  }
+  final List<Booklist> myBooklists = [
+    Booklist(
+      id: 1,
+      userId: 101,
+      title: "Classics to Read",
+      visibility: "public",
+      creationDate: DateTime(2023, 5, 20),
+      likesCount: 100,
+      booksCount: 2,
+      books: [
+        Book(
+          id: 1,
+          title: "The Alchemist",
+          author: "Paulo Coelho",
+          coverImage: "assets/images/book_cover8.jpeg",
+          description: "A journey to find one's destiny.",
+          rating: 4.5,
+          chapters: 15,
+          status: "Completed",
+        ),
+      ],
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -69,13 +60,13 @@ class LibraryPage extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [          
+        children: [
           const SizedBox(height: 12),
           _buildSectionTitle("Saved Books"),
           _buildBookGrid(myBooks),
           const SizedBox(height: 20),
           _buildSectionTitle("Saved Booklists"),
-          _buildBooklistGrid(myBooklists), // Fixed this part
+          _buildBooklistGrid(myBooklists),
         ],
       ),
     );
@@ -84,15 +75,9 @@ class LibraryPage extends StatelessWidget {
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const Icon(Icons.arrow_forward_ios, size: 16),
-        ],
+      child: Text(
+        title,
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -109,7 +94,7 @@ class LibraryPage extends StatelessWidget {
       ),
       itemCount: books.length,
       itemBuilder: (context, index) {
-       return SimpleBookCard(
+        return SimpleBookCard(
           book: books[index],
           onTap: () {
             Navigator.push(
@@ -123,8 +108,7 @@ class LibraryPage extends StatelessWidget {
       },
     );
   }
-
-   // New function for Booklists
+    
   Widget _buildBooklistGrid(List<Booklist> booklists) {
     return GridView.builder(
       shrinkWrap: true,

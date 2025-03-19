@@ -5,7 +5,7 @@ import 'package:inkora/screens/forum/forum_page.dart';
 import 'package:inkora/screens/home/home_page.dart';
 import 'package:inkora/screens/mylibrary/library_page.dart';
 import 'package:inkora/screens/notifications/notification_page.dart';
-import 'package:inkora/screens/profile/profile_page.dart';
+import 'package:inkora/screens/profile/my_profile_page.dart';
 import 'package:inkora/screens/write/write_page.dart';
 import 'package:inkora/screens/search/search_page.dart';
 
@@ -52,7 +52,7 @@ class _RootPageState extends State<RootPage> {
     LibraryPage(),
     WritePage(),
     ForumPage(),
-    ProfilePage(),
+    MyProfilePage(),
   ];
 
   @override

@@ -9,7 +9,7 @@ class BooksResult extends StatelessWidget {
 
   final List<Book> books = [
     Book(
-      id: "1",
+      id: 1,
       title: "Alice in Neverland",
       author: "Richard Jones",
       rating: 4.5,
@@ -19,7 +19,7 @@ class BooksResult extends StatelessWidget {
       coverImage: 'assets/images/book_cover.jpeg',
     ),
     Book(
-      id: "2",
+      id: 2,
       title: "Mysterious Island",
       author: "Jules Verne",
       rating: 4.0,
@@ -29,7 +29,7 @@ class BooksResult extends StatelessWidget {
       coverImage: 'assets/images/book_cover2.jpeg',
     ),
     Book(
-      id: "3",
+      id: 3,
       title: "Flutter for Beginners",
       author: "John Doe",
       rating: 5.0,
@@ -52,7 +52,8 @@ class BooksResult extends StatelessWidget {
         : ListView.builder(
             itemCount: filteredBooks.length,
             itemBuilder: (context, index) {
-              return BookCard(book: filteredBooks[index]);
+              return BookCard(book: filteredBooks[index], 
+              );
             },
           );
   }

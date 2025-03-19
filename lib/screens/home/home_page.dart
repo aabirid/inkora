@@ -6,7 +6,7 @@ import 'package:inkora/widgets/simple_book_card.dart';
 class HomePage extends StatelessWidget {
   final List<Book> recommendedBooks = [
     Book(
-      id: "1",
+      id: 1,
       title: "Darker By Four",
       author: "JUNE CL TAN",
       coverImage: "assets/images/book_cover8.jpeg",
@@ -16,7 +16,7 @@ class HomePage extends StatelessWidget {
       status: "Ongoing",
     ),
     Book(
-      id: "2",
+      id: 2,
       title: "The Riddle Of The Sea",
       author: "Jane Doe",
       coverImage: "assets/images/book_cover4.jpeg",
@@ -29,7 +29,7 @@ class HomePage extends StatelessWidget {
 
   final List<Book> continueReadingBooks = [
     Book(
-      id: "4",
+      id: 4,
       title: "Fantasy Besties",
       author: "John Doe",
       coverImage: "assets/images/book_cover6.jpeg",
@@ -39,7 +39,7 @@ class HomePage extends StatelessWidget {
       status: "Ongoing",
     ),
     Book(
-      id: "5",
+      id: 5,
       title: "Sci-Fi Odyssey",
       author: "Jane Doe",
       coverImage: "assets/images/book_cover2.jpeg",
@@ -52,7 +52,7 @@ class HomePage extends StatelessWidget {
 
   final List<Book> followingBooks = [
     Book(
-      id: "3",
+      id: 3,
       title: "Fantasy Besties",
       author: "John Doe",
       coverImage: "assets/images/book_cover3.jpeg",
@@ -62,7 +62,7 @@ class HomePage extends StatelessWidget {
       status: "Ongoing",
     ),
     Book(
-      id: "6",
+      id: 6,
       title: "Sci-Fi Odyssey",
       author: "Jane Doe",
       coverImage: "assets/images/book_cover5.jpeg",
@@ -72,7 +72,7 @@ class HomePage extends StatelessWidget {
       status: "Completed",
     ),
     Book(
-      id: "8",
+      id: 8,
       title: "Fantasy Besties",
       author: "John Doe",
       coverImage: "assets/images/book_cover7.jpeg",
@@ -85,7 +85,7 @@ class HomePage extends StatelessWidget {
 
   final List<Book> popularBooks = [
     Book(
-      id: "12",
+      id: 12,
       title: "Sci-Fi Odyssey",
       author: "Jane Doe",
       coverImage: "assets/images/book_cover.jpeg",
@@ -95,7 +95,7 @@ class HomePage extends StatelessWidget {
       status: "Completed",
     ),
      Book(
-      id: "18",
+      id: 18,
       title: "Sci-Fi Odyssey",
       author: "Jane Doe",
       coverImage: "assets/images/book_cover3.jpeg",
@@ -105,7 +105,7 @@ class HomePage extends StatelessWidget {
       status: "Completed",
     ),
     Book(
-      id: "9",
+      id: 9,
       title: "Fantasy Besties",
       author: "John Doe",
       coverImage: "assets/images/book_cover4.jpeg",
@@ -115,7 +115,7 @@ class HomePage extends StatelessWidget {
       status: "Ongoing",
     ),
     Book(
-      id: "22",
+      id: 22,
       title: "Sci-Fi Odyssey",
       author: "Jane Doe",
       coverImage: "assets/images/book_cover2.jpeg",

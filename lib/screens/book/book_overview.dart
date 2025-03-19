@@ -6,15 +6,49 @@ import 'package:inkora/screens/book/read_book_page.dart';
 class BookOverview extends StatefulWidget {
   final Book book;
 
-  const BookOverview({super.key, required this.book});
+  const BookOverview({Key? key, required this.book}) : super(key: key);
 
   @override
   _BookOverviewState createState() => _BookOverviewState();
 }
 
 class _BookOverviewState extends State<BookOverview> {
-  final List<Comment> comments = [];
+  late List<Comment> comments;
+
   final TextEditingController _commentController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Initialize the comments list
+    comments = [
+      Comment(
+        id: 1,
+        userId: 1,
+        userName: "User123",
+        bookId: widget.book.id,
+        content: "This book is amazing! I couldn't put it down.",
+        commentDate: DateTime.now().subtract(Duration(hours: 1)),
+      ),
+      Comment(
+        id: 2,
+        userId: 2,
+        userName: "User456",
+        bookId: widget.book.id,
+        content: "I really enjoyed the plot twists.",
+        commentDate: DateTime.now().subtract(Duration(days: 1)),
+      ),
+      Comment(
+        id: 3,
+        userId: 3,
+        userName: "User789",
+        bookId: widget.book.id,
+        content: "The pacing was a bit slow for my taste, but still good.",
+        commentDate: DateTime.now().subtract(Duration(days: 2)),
+      ),
+    ];
+  }
 
   void _addComment() {
     if (_commentController.text.trim().isNotEmpty) {
@@ -22,9 +56,12 @@ class _BookOverviewState extends State<BookOverview> {
         comments.insert(
           0,
           Comment(
-            user: "User123", // Replace with actual user later
-            text: _commentController.text.trim(),
-            timestamp: DateTime.now(),
+            id: comments.length + 1,
+            userId: 1, // Replace with actual user ID later
+            userName: "User123", // Replace with actual user name
+            bookId: widget.book.id,
+            content: _commentController.text.trim(),
+            commentDate: DateTime.now(),
           ),
         );
       });
@@ -66,61 +103,64 @@ class _BookOverviewState extends State<BookOverview> {
   }
 
   Widget _buildBookDetails() {
-  return Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.asset(
-          widget.book.coverImage,
-          width: 120,
-          height: 180,
-          fit: BoxFit.cover,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset(
+            widget.book.coverImage,
+            width: 120,
+            height: 180,
+            fit: BoxFit.cover,
+          ),
         ),
-      ),
-      const SizedBox(width: 16),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.book.title,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text("by ${widget.book.author}",
-                style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.star, color: Colors.orange, size: 20),
-                const SizedBox(width: 4),
-                Text("${widget.book.rating}"),
-                const SizedBox(width: 10),
-                Icon(Icons.menu_book_rounded, color: Colors.grey, size: 20),
-                const SizedBox(width: 5),
-                Text("${widget.book.chapters} chapters"),
-              ],
-            ),
-            const SizedBox(height: 10),
-            _buildStatusTag(widget.book.status),
-            const SizedBox(height: 10), // Add some spacing
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (BuildContext) {
-                    return ReadBookPage();
-                  },
-                ),
-              );
-              },
-              child: const Text("Read", style: TextStyle(fontSize: 16)),
-            ),
-          ],
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(widget.book.title,
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Text("by ${widget.book.author}",
+                  style: const TextStyle(
+                      fontSize: 16, fontStyle: FontStyle.italic)),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.star, color: Colors.orange, size: 20),
+                  const SizedBox(width: 4),
+                  Text("${widget.book.rating}"),
+                  const SizedBox(width: 10),
+                  Icon(Icons.menu_book_rounded, color: Colors.grey, size: 20),
+                  const SizedBox(width: 5),
+                  Text("${widget.book.chapters} chapters"),
+                ],
+              ),
+              const SizedBox(height: 10),
+              _buildStatusTag(widget.book.status),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => ReadBookPage()),
+                        );
+                      },
+                      child: Text("Read")
+                      ),
+                  IconButton(onPressed: (){}, icon: Icon(Icons.bookmark_border_outlined)),
+                ],
+              )
+            ],
+          ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
   Widget _buildStatusTag(String status) {
     Color tagColor = status == "Completed" ? Colors.green : Colors.blue;
@@ -132,7 +172,8 @@ class _BookOverviewState extends State<BookOverview> {
       ),
       child: Text(
         status,
-        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+        style: const TextStyle(
+            color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -141,19 +182,20 @@ class _BookOverviewState extends State<BookOverview> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Comments", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Text("Comments",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         SizedBox(
-          height: 250, // Fix height to prevent infinite expansion
+          height: 400, // Fix height to prevent infinite expansion
           child: ListView.builder(
             itemCount: comments.length,
             itemBuilder: (context, index) {
               return ListTile(
                 leading: const CircleAvatar(child: Icon(Icons.person)),
-                title: Text(comments[index].user),
-                subtitle: Text(comments[index].text),
+                title: Text(comments[index].userName),
+                subtitle: Text(comments[index].content),
                 trailing: Text(
-                  "${comments[index].timestamp.hour}:${comments[index].timestamp.minute}",
+                  "${comments[index].commentDate.hour}:${comments[index].commentDate.minute}",
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               );

@@ -1,53 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:inkora/models/book.dart';
 import 'package:inkora/models/booklist.dart';
 import 'package:inkora/screens/search/search_page.dart';
 import 'package:inkora/widgets/booklist_card.dart';
 import 'package:inkora/widgets/book_card.dart';
 
 class BooklistOverview extends StatelessWidget {
-  final Booklist booklist; // Update to Booklist type
+  final Booklist booklist;
 
   const BooklistOverview({super.key, required this.booklist});
 
   @override
   Widget build(BuildContext context) {
-    final List<Book> books = [
-      Book(
-        id: "1",
-        title: "Alice in Neverland",
-        author: "Richard Jones",
-        rating: 4.5,
-        status: "Completed",
-        chapters: 27,
-        description: "Alice, growing older and obsessed with her memories of Wonderland, embarks on a journey to recapture her youth.",
-        coverImage: 'assets/images/book_cover.jpeg',
-      ),
-      Book(
-        id: "2",
-        title: "Mysterious Island",
-        author: "Jules Verne",
-        rating: 4.0,
-        status: "On-Going",
-        chapters: 35,
-        description: "A group of castaways struggle for survival on a mysterious island full of secrets.",
-        coverImage: 'assets/images/book_cover2.jpeg',
-      ),
-      Book(
-        id: "3",
-        title: "Flutter for Beginners",
-        author: "John Doe",
-        rating: 5.0,
-        status: "Completed",
-        chapters: 55,
-        description: "A complete guide to learning Flutter from scratch.",
-        coverImage: 'assets/images/book_cover3.jpeg',
-      ),
-    ];
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Booklist Overview"),
+        title: Text(booklist.title),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -65,8 +31,7 @@ class BooklistOverview extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.share_rounded),
-            onPressed: () {
-            },
+            onPressed: () {},
           ),
         ],
       ),
@@ -78,12 +43,19 @@ class BooklistOverview extends StatelessWidget {
             BooklistCard(booklist: booklist),
             const SizedBox(height: 10),
             Expanded(
-              child: ListView.builder(
-                itemCount: books.length,
-                itemBuilder: (context, index) {
-                  return BookCard(book: books[index]);
-                },
-              ),
+              child: booklist.books != null && booklist.books!.isNotEmpty
+                  ? ListView.builder(
+                      itemCount: booklist.books!.length,
+                      itemBuilder: (context, index) {
+                        return BookCard(book: booklist.books![index]);
+                      },
+                    )
+                  : const Center(
+                      child: Text(
+                        "No books available in this booklist.",
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      ),
+                    ),
             ),
           ],
         ),

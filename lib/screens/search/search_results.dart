@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inkora/screens/search/books_result.dart';
 import 'package:inkora/screens/search/booklists_result.dart';
-import 'package:inkora/screens/search/authors_result.dart';
+import 'package:inkora/screens/search/profiles_result.dart';
 
 class SearchResultsPage extends StatelessWidget {
   final String query;
@@ -26,7 +26,7 @@ class SearchResultsPage extends StatelessWidget {
         body: TabBarView(
           children: [
             BooksResult(query: query),
-            AuthorsResult(query: query),
+            ProfilesResult(query: query),
             BooklistsResult(query: query),
           ],
         ),

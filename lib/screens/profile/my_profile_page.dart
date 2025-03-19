@@ -1,31 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:inkora/models/booklist.dart';
-import 'package:inkora/models/user.dart';
 import 'package:inkora/models/book.dart';
+import 'package:inkora/models/booklist.dart';
 import 'package:inkora/screens/book/book_overview.dart';
 import 'package:inkora/screens/book/booklist_overview.dart';
+import 'package:inkora/screens/profile/profile_edit_page.dart';
 import 'package:inkora/widgets/simple_book_card.dart';
 import 'package:inkora/widgets/simple_booklist_card.dart';
 
-class ProfilePage extends StatefulWidget {
-  final User user; // Accept User parameter
-
-  const ProfilePage({super.key, required this.user});
+class MyProfilePage extends StatefulWidget {
+  const MyProfilePage({super.key});
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
+  State<MyProfilePage> createState() => _MyProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _MyProfilePageState extends State<MyProfilePage> {
   int selectedTab = 0;
-
-  late final User currentUser; // Declare variable for user
-
-  @override
-  void initState() {
-    super.initState();
-    currentUser = widget.user; // Get user passed from the constructor
-  }
 
   final List<Book> myBooks = [
     Book(
@@ -76,9 +66,6 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${currentUser.firstName} ${currentUser.lastName}'), // Use user data dynamically
-      ),
       body: Column(
         children: [
           _buildProfileSection(),
@@ -102,38 +89,46 @@ class _ProfilePageState extends State<ProfilePage> {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          CircleAvatar(
+          const CircleAvatar(
             radius: 40,
-            backgroundImage: AssetImage(
-              currentUser.photo ?? 'assets/images/profile_default.jpeg', // Default image if null
-            ),
+            backgroundImage: AssetImage('assets/images/profile_default.jpeg'),
           ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
+              _buildStatColumn('4', 'Work'),
               _buildStatColumn('258', 'Followers'),
               _buildStatColumn('62', 'Following'),
             ],
           ),
           const SizedBox(height: 16),
-          Column(
+          const Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                '${currentUser.firstName} ${currentUser.lastName}',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                'Sara Jane',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
-              Text(currentUser.email),
+              Text("Breathing books that's how I live"),
+              Text('Coming Soon... 🔔'),
             ],
           ),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
+          OutlinedButton(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ProfileEditPage(),
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 40),
             ),
-            child: const Text('Follow'),
+            child: const Text('Edit Profile'),
           ),
         ],
       ),
