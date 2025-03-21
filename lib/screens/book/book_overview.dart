@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:inkora/models/book.dart';
 import 'package:inkora/models/comment.dart';
 import 'package:inkora/screens/book/read_book_page.dart';
+import 'package:inkora/screens/search/search_page.dart';
 
 class BookOverview extends StatefulWidget {
   final Book book;
@@ -74,7 +75,20 @@ class _BookOverviewState extends State<BookOverview> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.book.title),
-        backgroundColor: Colors.green.shade300,
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => SearchPage()),
+              );
+            },
+            icon: const Icon(Icons.search),
+          ),
+          IconButton(
+            icon: const Icon(Icons.share_rounded),
+            onPressed: () {},
+          ),
+        ],        
       ),
       body: Column(
         children: [

@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:inkora/components/data_provider.dart';
+import 'package:inkora/models/group.dart';
+import 'package:inkora/models/message.dart';
+import 'package:inkora/utils/image_picker.dart';
 
 class ChatRoomPage extends StatefulWidget {
-  const ChatRoomPage({super.key});
+  final int groupId;
+  
+  const ChatRoomPage({
+    super.key, 
+    required this.groupId,
+  });
 
   @override
   _ChatRoomPageState createState() => _ChatRoomPageState();
@@ -9,57 +18,61 @@ class ChatRoomPage extends StatefulWidget {
 
 class _ChatRoomPageState extends State<ChatRoomPage> {
   final TextEditingController _messageController = TextEditingController();
-  final List<Map<String, dynamic>> _messages = [
-    {
-      'text': 'Guys did you read the latest chapters of Kingdom of fire ... period 🔥',
-      'isCurrentUser': true,
-      'timestamp': DateTime.now().subtract(const Duration(hours: 1)),
-    },
-    {
-      'text': 'I diiid i think i\'m in love with the new caracter ❤️💕',
-      'isCurrentUser': false,
-      'user': 'Name1',
-      'avatar': 'assets/images/user1.jpg',
-      'timestamp': DateTime.now().subtract(const Duration(minutes: 55)),
-    },
-    {
-      'text': 'nooo don\'t spoil ☺️❤️ i didn\'t read it yet',
-      'isCurrentUser': false,
-      'user': 'Name2',
-      'avatar': 'assets/images/user2.jpg',
-      'timestamp': DateTime.now().subtract(const Duration(minutes: 50)),
-    },
-    {
-      'text': 'yeaaah i did came out last week ... happy (: ',
-      'isCurrentUser': false,
-      'user': 'Name3',
-      'avatar': 'assets/images/user3.jpg',
-      'timestamp': DateTime.now().subtract(const Duration(minutes: 45)),
-    },
-    {
-      'text': 'no waaay you should read it right now 😮🔥🔥',
-      'isCurrentUser': true,
-      'timestamp': DateTime.now().subtract(const Duration(minutes: 40)),
-    },
-    {
-      'image': 'assets/images/map.jpg',
-      'isCurrentUser': false,
-      'user': 'Name1',
-      'avatar': 'assets/images/user1.jpg',
-      'timestamp': DateTime.now().subtract(const Duration(minutes: 35)),
-    },
-  ];
+  late Group _currentGroup;
+  late List<Message> _messages;
+  final ScrollController _scrollController = ScrollController();
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadGroupData();
+  }
+  
+  void _loadGroupData() {
+    // Find the current group
+    _currentGroup = DataProvider.groups.firstWhere(
+      (group) => group.id == widget.groupId,
+      orElse: () => DataProvider.groups.first,
+    );
+    
+    // Load messages for this group
+    _messages = DataProvider.getGroupMessages(widget.groupId);
+    
+    // Scroll to bottom after frame is rendered
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
 
   void _sendMessage() {
     if (_messageController.text.trim().isNotEmpty) {
+      final newMessage = DataProvider.addMessage(
+        DataProvider.currentUser.id,
+        widget.groupId,
+        _messageController.text.trim(),
+      );
+      
       setState(() {
-        _messages.add({
-          'text': _messageController.text.trim(),
-          'isCurrentUser': true,
-          'timestamp': DateTime.now(),
-        });
+        _messages.add(newMessage);
       });
       _messageController.clear();
+      
+      // Scroll to bottom after adding message
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
     }
   }
 
@@ -69,24 +82,27 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       appBar: AppBar(
         title: Row(
           children: [
-            const CircleAvatar(
-              backgroundImage: AssetImage('assets/images/book_cover3.jpeg'),
+            CircleAvatar(
+              backgroundImage: AssetImage(_currentGroup.photo ?? DataProvider.getFallbackGroupImage(_currentGroup.id)),
               radius: 16,
+              onBackgroundImageError: (exception, stackTrace) {
+                // Fallback for image loading errors
+              },
             ),
             const SizedBox(width: 8),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Fantasy Besties',
-                  style: TextStyle(
+                Text(
+                  _currentGroup.name,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  '52 Members',
+                  '${_currentGroup.members?.length ?? 0} Members',
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 12,
@@ -97,6 +113,12 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           ],
         ),
         actions: [          
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () {
+              _showGroupInfoDialog();
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: () {},
@@ -114,29 +136,98 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     );
   }
 
+  void _showGroupInfoDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(_currentGroup.name),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: CircleAvatar(
+                  radius: 40,
+                  backgroundImage: AssetImage(_currentGroup.photo ?? DataProvider.getFallbackGroupImage(_currentGroup.id)),
+                  onBackgroundImageError: (exception, stackTrace) {
+                    // Fallback for image loading errors
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text('Description: ${_currentGroup.description ?? 'No description'}'),
+              const SizedBox(height: 8),
+              Text('Created: ${_formatDate(_currentGroup.creationDate)}'),
+              const SizedBox(height: 8),
+              Text('Members: ${_currentGroup.members?.length ?? 0}'),
+              const SizedBox(height: 16),
+              const Text('Members List:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              ..._currentGroup.members?.map((userId) {
+                final user = DataProvider.getUserById(userId);
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 12,
+                        backgroundImage: AssetImage(user.photo ?? DataProvider.getFallbackUserImage(user.id)),
+                        onBackgroundImageError: (exception, stackTrace) {
+                          // Fallback for image loading errors
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      Text('${user.firstName} ${user.lastName}'),
+                      if (userId == _currentGroup.creatorId)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 4),
+                          child: Text('(Creator)', style: TextStyle(fontStyle: FontStyle.italic)),
+                        ),
+                    ],
+                  ),
+                );
+              }).toList() ?? [],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildChatMessages() {
     return ListView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.all(16),
       itemCount: _messages.length + 1, // +1 for the timestamp
       itemBuilder: (context, index) {
         if (index == 0) {
-          return _buildTimestamp('Oct 05, 2024, 9:41 AM');
+          return _buildTimestamp(_formatDate(_messages.isNotEmpty ? _messages.first.timestamp : DateTime.now()));
         }
         
         final message = _messages[index - 1];
-        if (message.containsKey('image')) {
+        final sender = DataProvider.getUserById(message.senderId);
+        final isCurrentUser = message.senderId == DataProvider.currentUser.id;
+        
+        if (message.imageUrl != null && message.imageUrl!.isNotEmpty) {
           return _buildImageMessage(
-            message['image'],
-            isCurrentUser: message['isCurrentUser'],
-            avatar: message['avatar'],
-            username: message['user'],
+            message.imageUrl!,
+            isCurrentUser: isCurrentUser,
+            avatar: sender.photo ?? DataProvider.getFallbackUserImage(sender.id),
+            username: '${sender.firstName} ${sender.lastName}',
           );
         } else {
           return _buildMessage(
-            message['text'],
-            isCurrentUser: message['isCurrentUser'],
-            avatar: message['avatar'],
-            username: message['user'],
+            message.content,
+            isCurrentUser: isCurrentUser,
+            avatar: sender.photo ?? DataProvider.getFallbackUserImage(sender.id),
+            username: '${sender.firstName} ${sender.lastName}',
           );
         }
       },
@@ -174,9 +265,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           if (!isCurrentUser) ...[
             CircleAvatar(
               radius: 16,
-              backgroundImage: AssetImage(avatar ?? 'assets/images/horror.jpeg'),
+              backgroundImage: AssetImage(avatar ?? 'assets/images/default_profile.jpg'),
               onBackgroundImageError: (exception, stackTrace) {
-                return;
+                // Fallback for image loading errors
               },
             ),
             const SizedBox(width: 8),
@@ -197,6 +288,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                   ),
                 ),
               Container(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.7,
+                ),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: isCurrentUser ? Colors.green : Colors.grey[200],
@@ -232,9 +326,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           if (!isCurrentUser) ...[
             CircleAvatar(
               radius: 16,
-              backgroundImage: AssetImage(avatar ?? 'assets/images/book_cover2.jpeg'),
+              backgroundImage: AssetImage(avatar ?? 'assets/images/default_profile.jpg'),
               onBackgroundImageError: (exception, stackTrace) {
-                return;
+                // Fallback for image loading errors
               },
             ),
             const SizedBox(width: 8),
@@ -278,6 +372,25 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     );
   }
 
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final messageDate = DateTime(date.year, date.month, date.day);
+    
+    if (messageDate == today) {
+      return 'Today, ${_formatTime(date)}';
+    } else if (messageDate == yesterday) {
+      return 'Yesterday, ${_formatTime(date)}';
+    } else {
+      return '${date.day}/${date.month}/${date.year}, ${_formatTime(date)}';
+    }
+  }
+  
+  String _formatTime(DateTime date) {
+    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
   Widget _buildMessageInput() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -310,14 +423,14 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 ),
                 suffixIcon: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.mic),
-                      onPressed: () {},
-                    ),
+                  children: [                    
                     IconButton(
                       icon: const Icon(Icons.image),
-                      onPressed: () {},
+                      onPressed: () {
+                        // This would typically open an image picker
+                        // For now, we'll just simulate adding an image
+                        _showImagePickerDialog();
+                      },
                     ),
                   ],
                 ),
@@ -325,9 +438,75 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               onSubmitted: (_) => _sendMessage(),
             ),
           ),
+          const SizedBox(width: 8),
+          FloatingActionButton(
+            onPressed: _sendMessage,
+            mini: true,
+            child: const Icon(Icons.send),
+          ),
         ],
       ),
     );
+  }
+
+  void _showImagePickerDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Image Source'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Gallery'),
+              onTap: () async {
+                Navigator.pop(context);
+                final imagePath = await context.pickImageFromGallery();
+                if (imagePath != null) {
+                  _addImageMessage(imagePath);
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Camera'),
+              onTap: () async {
+                Navigator.pop(context);
+                final imagePath = await context.pickImageFromCamera();
+                if (imagePath != null) {
+                  _addImageMessage(imagePath);
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  void _addImageMessage(String imagePath) {
+    final newMessage = DataProvider.addMessage(
+      DataProvider.currentUser.id,
+      widget.groupId,
+      '',
+      imageUrl: imagePath,
+    );
+    
+    setState(() {
+      _messages.add(newMessage);
+    });
+    
+    // Scroll to bottom after adding image
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 }
 

@@ -6,11 +6,11 @@ class AppTheme {
     brightness: Brightness.light,
     primaryColor: const Color(0xFF6EBF84),
     scaffoldBackgroundColor: Colors.white,
-    fontFamily: 'MarkaziText', // Use your custom font here
+    fontFamily: 'MarkaziText', 
     appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF6EBF84),
-      foregroundColor: Colors.white,
-      elevation: 0,
+      backgroundColor:  Colors.white,
+      foregroundColor: Color.fromARGB(255, 51, 88, 61),
+      elevation: 0.7,
     ),
     textTheme: const TextTheme(
       bodyLarge: TextStyle(
@@ -74,8 +74,8 @@ class AppTheme {
     scaffoldBackgroundColor: const Color(0xFF1E1E1E),
     fontFamily: 'MarkaziText', // Use your custom font here
     appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF599F6C),
-      foregroundColor: Colors.white,
+      backgroundColor: Color(0xFF2A2A2A),
+      foregroundColor: Color(0xFF6EBF84),
       elevation: 0,
     ),
     textTheme: const TextTheme(
