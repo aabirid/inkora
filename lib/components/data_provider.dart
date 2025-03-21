@@ -5,98 +5,114 @@ import 'package:inkora/models/message.dart';
 class DataProvider {
   // Current user
   static final User currentUser = User(
-    id: 1,
-    lastName: 'Smith',
-    firstName: 'John',
-    email: 'john.smith@example.com',
+  id: 1,
+  lastName: 'Smith',
+  firstName: 'John',
+  email: 'john.smith@example.com',
+  password: 'password123',
+  gender: 'male',
+  registrationDate: DateTime(2023, 5, 15),
+  status: 'active',
+  photo: 'assets/images/profile1.jpg',
+  username: 'johnsmith',  // Added username
+  bio: 'A passionate software developer',  // Added bio
+);
+
+// Sample users
+static final List<User> users = [
+  currentUser,
+  User(
+    id: 2,
+    lastName: 'Johnson',
+    firstName: 'Emily',
+    email: 'emily.j@example.com',
+    password: 'password123',
+    gender: 'female',
+    registrationDate: DateTime(2023, 6, 10),
+    status: 'active',
+    photo: 'assets/images/profile2.jpg',
+    username: 'emilyjohnson',  // Added username
+    bio: 'Loves to code and explore new tech',  // Added bio
+  ),
+  User(
+    id: 3,
+    lastName: 'Williams',
+    firstName: 'Michael',
+    email: 'michael.w@example.com',
     password: 'password123',
     gender: 'male',
-    registrationDate: DateTime(2023, 5, 15),
+    registrationDate: DateTime(2023, 7, 5),
     status: 'active',
-    photo: 'assets/images/profile1.jpg',
-  );
-
-  // Sample users
-  static final List<User> users = [
-    currentUser,
-    User(
-      id: 2,
-      lastName: 'Johnson',
-      firstName: 'Emily',
-      email: 'emily.j@example.com',
-      password: 'password123',
-      gender: 'female',
-      registrationDate: DateTime(2023, 6, 10),
-      status: 'active',
-      photo: 'assets/images/profile2.jpg',
-    ),
-    User(
-      id: 3,
-      lastName: 'Williams',
-      firstName: 'Michael',
-      email: 'michael.w@example.com',
-      password: 'password123',
-      gender: 'male',
-      registrationDate: DateTime(2023, 7, 5),
-      status: 'active',
-      photo: 'assets/images/profile3.jpg',
-    ),
-    User(
-      id: 4,
-      lastName: 'Brown',
-      firstName: 'Sophia',
-      email: 'sophia.b@example.com',
-      password: 'password123',
-      gender: 'female',
-      registrationDate: DateTime(2023, 8, 20),
-      status: 'active',
-      photo: 'assets/images/profile4.jpg',
-    ),
-    User(
-      id: 5,
-      lastName: 'Davis',
-      firstName: 'James',
-      email: 'james.d@example.com',
-      password: 'password123',
-      gender: 'male',
-      registrationDate: DateTime(2023, 9, 12),
-      status: 'active',
-      photo: 'assets/images/profile5.jpg',
-    ),
-    User(
-      id: 6,
-      lastName: 'Miller',
-      firstName: 'Olivia',
-      email: 'olivia.m@example.com',
-      password: 'password123',
-      gender: 'female',
-      registrationDate: DateTime(2023, 10, 8),
-      status: 'active',
-      photo: 'assets/images/profile6.jpg',
-    ),
-    User(
-      id: 7,
-      lastName: 'Wilson',
-      firstName: 'Noah',
-      email: 'noah.w@example.com',
-      password: 'password123',
-      gender: 'male',
-      registrationDate: DateTime(2023, 11, 15),
-      status: 'active',
-      photo: 'assets/images/profile7.jpg',
-    ),
-    User(
-      id: 8,
-      lastName: 'Taylor',
-      firstName: 'Emma',
-      email: 'emma.t@example.com',
-      password: 'password123',
-      gender: 'female',
-      registrationDate: DateTime(2023, 12, 3),
-      status: 'active',
-      photo: 'assets/images/profile8.jpg',
-    ),
-  ];
+    photo: 'assets/images/profile3.jpg',
+    username: 'michaelwilliams',  // Added username
+    bio: 'Tech enthusiast and gamer',  // Added bio
+  ),
+  User(
+    id: 4,
+    lastName: 'Brown',
+    firstName: 'Sophia',
+    email: 'sophia.b@example.com',
+    password: 'password123',
+    gender: 'female',
+    registrationDate: DateTime(2023, 8, 20),
+    status: 'active',
+    photo: 'assets/images/profile4.jpg',
+    username: 'sophiabrown',  // Added username
+    bio: 'Creative designer and artist',  // Added bio
+  ),
+  User(
+    id: 5,
+    lastName: 'Davis',
+    firstName: 'James',
+    email: 'james.d@example.com',
+    password: 'password123',
+    gender: 'male',
+    registrationDate: DateTime(2023, 9, 12),
+    status: 'active',
+    photo: 'assets/images/profile5.jpg',
+    username: 'jamesdavis',  // Added username
+    bio: 'Business professional with a passion for tech',  // Added bio
+  ),
+  User(
+    id: 6,
+    lastName: 'Miller',
+    firstName: 'Olivia',
+    email: 'olivia.m@example.com',
+    password: 'password123',
+    gender: 'female',
+    registrationDate: DateTime(2023, 10, 8),
+    status: 'active',
+    photo: 'assets/images/profile6.jpg',
+    username: 'oliviamiller',  // Added username
+    bio: 'Aspiring developer and tech lover',  // Added bio
+  ),
+  User(
+    id: 7,
+    lastName: 'Wilson',
+    firstName: 'Noah',
+    email: 'noah.w@example.com',
+    password: 'password123',
+    gender: 'male',
+    registrationDate: DateTime(2023, 11, 15),
+    status: 'active',
+    photo: 'assets/images/profile7.jpg',
+    username: 'noahwilson',  // Added username
+    bio: 'Music lover and coding enthusiast',  // Added bio
+  ),
+  User(
+    id: 8,
+    lastName: 'Taylor',
+    firstName: 'Emma',
+    email: 'emma.t@example.com',
+    password: 'password123',
+    gender: 'female',
+    registrationDate: DateTime(2023, 12, 3),
+    status: 'active',
+    photo: 'assets/images/profile8.jpg',
+    username: 'emmataylor',  // Added username
+    bio: 'Enjoys writing and tech innovations',  // Added bio
+  ),
+];
 
   // Sample groups
   static final List<Group> groups = [
@@ -458,21 +474,25 @@ class DataProvider {
   };
 
   // Get user by ID
-  static User getUserById(int userId) {
-    return users.firstWhere((user) => user.id == userId, 
-      orElse: () => User(
-        id: 0,
-        lastName: 'Unknown',
-        firstName: 'User',
-        email: 'unknown@example.com',
-        password: '',
-        gender: 'unknown',
-        registrationDate: DateTime.now(),
-        status: 'unknown',
-        photo: 'assets/images/default_profile.jpg',
-      )
-    );
-  }
+ static User getUserById(int userId) {
+  return users.firstWhere(
+    (user) => user.id == userId,
+    orElse: () => User(
+      id: 0,
+      lastName: 'Unknown',
+      firstName: 'User',
+      email: 'unknown@example.com',
+      password: '',
+      gender: 'unknown',
+      registrationDate: DateTime.now(),
+      status: 'unknown',
+      photo: 'assets/images/default_profile.jpg',
+      username: 'unknown_user',  // Default username
+      bio: 'No bio available',   // Default bio
+    ),
+  );
+}
+
 
   // Get groups where user is creator
   static List<Group> getCreatedGroups(int userId) {

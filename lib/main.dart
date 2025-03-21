@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:inkora/models/user.dart';
 import 'package:inkora/screens/auth/login_page.dart';
 import 'package:inkora/theme/theme.dart';
 import 'package:inkora/screens/forum/forum_page.dart';
@@ -47,19 +48,38 @@ class RootPage extends StatefulWidget {
 class _RootPageState extends State<RootPage> {
   int currentPage = 0;
 
-  final List<Widget> pages = [
-    HomePage(),
-    LibraryPage(),
-    WritePage(),
-    ForumPage(),
-    MyProfilePage(),
-  ];
+  // Define the current user (can be updated from anywhere)
+  User currentUser = User(
+  id: 1,
+  lastName: 'Doe',
+  firstName: 'John',
+  username: 'john_doe',
+  email: 'john.doe@example.com',
+  password: 'password123',
+  gender: 'Male',
+  registrationDate: DateTime.now(),
+  status: 'Active',  
+  photo: 'assets/images/book_cover7.jpeg', 
+  bio: 'A passionate reader and writer.', 
+);
+
+
+  // Define the pages, including MyProfilePage dynamically when needed
+  List<Widget> get pages {
+    return [
+      HomePage(),
+      LibraryPage(),
+      WritePage(),
+      ForumPage(),
+      getProfilePage(), // Add this dynamically to the pages list
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false, 
+        automaticallyImplyLeading: false,
         title: const Text('Inkora'),
         actions: [
           IconButton(
@@ -130,5 +150,10 @@ class _RootPageState extends State<RootPage> {
         type: BottomNavigationBarType.fixed,
       ),
     );
+  }
+
+  // Update the currentPage to load MyProfilePage with currentUser dynamically
+  Widget getProfilePage() {
+    return MyProfilePage(currentUser: currentUser); // Dynamically pass the currentUser
   }
 }

@@ -7,7 +7,7 @@ import 'package:inkora/screens/search/search_page.dart';
 class BookOverview extends StatefulWidget {
   final Book book;
 
-  const BookOverview({Key? key, required this.book}) : super(key: key);
+  const BookOverview({super.key, required this.book});
 
   @override
   _BookOverviewState createState() => _BookOverviewState();

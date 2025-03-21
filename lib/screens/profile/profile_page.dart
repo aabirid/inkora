@@ -6,6 +6,7 @@ import 'package:inkora/screens/book/book_overview.dart';
 import 'package:inkora/screens/book/booklist_overview.dart';
 import 'package:inkora/widgets/simple_book_card.dart';
 import 'package:inkora/widgets/simple_booklist_card.dart';
+import 'package:inkora/theme/theme.dart';
 
 class ProfilePage extends StatefulWidget {
   final User user; // Accept User parameter
@@ -18,13 +19,17 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   int selectedTab = 0;
-
   late final User currentUser; // Declare variable for user
+
+  bool isFollowing = false; // Track if the current user is following
 
   @override
   void initState() {
     super.initState();
     currentUser = widget.user; // Get user passed from the constructor
+
+    // Optionally, you can check if the current user is already following this profile.
+    // For now, I'm just initializing it as false. Update this with logic if needed.
   }
 
   final List<Book> myBooks = [
@@ -73,11 +78,21 @@ class _ProfilePageState extends State<ProfilePage> {
     ),
   ];
 
+  // Function to toggle follow/unfollow
+  void toggleFollow() {
+    setState(() {
+      isFollowing = !isFollowing; // Toggle the follow state
+    });
+
+    // Optionally, send a request to the backend to update the follow status in the database.
+    // Example: sendFollowRequest(currentUser.id);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${currentUser.firstName} ${currentUser.lastName}'), // Use user data dynamically
+        title: Text('${currentUser.firstName} ${currentUser.lastName}'),
       ),
       body: Column(
         children: [
@@ -105,13 +120,14 @@ class _ProfilePageState extends State<ProfilePage> {
           CircleAvatar(
             radius: 40,
             backgroundImage: AssetImage(
-              currentUser.photo ?? 'assets/images/profile_default.jpeg', // Default image if null
+              currentUser.photo ?? 'assets/images/profile_default.jpeg',
             ),
           ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
+              _buildStatColumn('4', 'Work'),
               _buildStatColumn('258', 'Followers'),
               _buildStatColumn('62', 'Following'),
             ],
@@ -120,21 +136,38 @@ class _ProfilePageState extends State<ProfilePage> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                '${currentUser.firstName} ${currentUser.lastName}',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              Text(currentUser.email),
+              Text('@${currentUser.username}',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              if (currentUser.bio != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    currentUser.bio!,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 40),
-            ),
-            child: const Text('Follow'),
-          ),
+          // Follow Button (with conditional styling)
+          isFollowing
+              ? OutlinedButton(
+                  onPressed: toggleFollow,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Theme.of(context).primaryColor,
+                    side: BorderSide(color: Theme.of(context).primaryColor),
+                    minimumSize: const Size(double.infinity, 40),
+                  ),
+                  child: Text('Unfollow', style: TextStyle(color: Theme.of(context).primaryColor)),
+                )
+              : ElevatedButton(
+                  onPressed: toggleFollow,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 40),
+                    backgroundColor: Theme.of(context).primaryColor,
+                  ),
+                  child: const Text('Follow'),
+                ),
         ],
       ),
     );
@@ -206,7 +239,8 @@ class _ProfilePageState extends State<ProfilePage> {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => BooklistOverview(booklist: items[index]),
+                  builder: (context) =>
+                      BooklistOverview(booklist: items[index]),
                 ),
               ),
             ),

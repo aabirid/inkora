@@ -1,122 +1,122 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:inkora/models/user.dart';
 
-class ProfileEditPage extends StatelessWidget {
-  const ProfileEditPage({super.key});
+class ProfileEditPage extends StatefulWidget {
+  final User user;
+
+  const ProfileEditPage({super.key, required this.user});
+
+  @override
+  _ProfileEditPageState createState() => _ProfileEditPageState();
+}
+
+class _ProfileEditPageState extends State<ProfileEditPage> {
+  late User _editedUser;
+  final _formKey = GlobalKey<FormState>();
+  File? _newProfileImage;
+
+  @override
+  void initState() {
+    super.initState();
+    _editedUser = widget.user.copyWith(); // Copy user to avoid modifying original until saved
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _newProfileImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  void _saveProfile() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      
+      // Apply new profile picture if changed
+      final updatedUser = _editedUser.copyWith(
+        photo: _newProfileImage != null ? _newProfileImage!.path : _editedUser.photo,
+      );
+
+      Navigator.pop(context, updatedUser); // Return updated user to MyProfilePage
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        leadingWidth: 85,
-        title: const Text('Edit Profile'),
-        actions: [
-          TextButton(
-            onPressed: () {},
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
+      appBar: AppBar(title: const Text("Edit Profile")),
+      body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  const CircleAvatar(
-                    radius: 50,
-                    backgroundImage: AssetImage('assets/images/profile_default.jpeg'),
-                  ),
-                  Positioned(
-                    bottom: 5,
-                    right: 5,
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              GestureDetector(
+                onTap: _pickImage,
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundImage: _newProfileImage != null
+                      ? FileImage(_newProfileImage!) // Display new image if selected
+                      : (_editedUser.photo != null
+                          ? FileImage(File(_editedUser.photo!)) // Display existing image if available
+                          : const AssetImage("assets/images/profile_default.jpeg")) as ImageProvider,
+                  child: const Align(
+                    alignment: Alignment.bottomRight,
                     child: CircleAvatar(
                       radius: 15,
                       backgroundColor: Colors.white,
-                      child: IconButton(
-                        padding: EdgeInsets.zero,
-                        icon: const Icon(Icons.camera_alt, size: 20, color: Colors.black),
-                        onPressed: () {},
-                      ),
+                      child: Icon(Icons.edit, size: 18, color: Colors.black),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            _buildEditableField('Name', 'Sara Jane'),
-            _buildEditableField('Username', 'sarajane_zo'),
-            _buildEditableField('Bio', "Breathing books that's how I live\nComing Soon... 🔔", maxLines: 3),
-            const Divider(height: 32),
-            _buildEditableField('Email', 'Sarajane.west@gmail.com', isEditable: false),
-            _buildEditableField('Phone', '+1 202 555 0147'),
-            _buildDropdownField('Gender', 'Female', ['Male', 'Female', 'Other']),
-          ],
+              const SizedBox(height: 20),
+              TextFormField(
+                initialValue: _editedUser.firstName,
+                decoration: const InputDecoration(labelText: "First Name"),
+                validator: (value) => value!.isEmpty ? "Enter your first name" : null,
+                onSaved: (value) => _editedUser = _editedUser.copyWith(firstName: value),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                initialValue: _editedUser.lastName,
+                decoration: const InputDecoration(labelText: "Last Name"),
+                validator: (value) => value!.isEmpty ? "Enter your last name" : null,
+                onSaved: (value) => _editedUser = _editedUser.copyWith(lastName: value),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                initialValue: _editedUser.email,
+                decoration: const InputDecoration(labelText: "Email"),
+                validator: (value) => value!.isEmpty ? "Enter your email" : null,
+                onSaved: (value) => _editedUser = _editedUser.copyWith(email: value),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                initialValue: _editedUser.username, // Add username field
+                decoration: const InputDecoration(labelText: "Username"),
+                validator: (value) => value!.isEmpty ? "Enter your username" : null,
+                onSaved: (value) => _editedUser = _editedUser.copyWith(username: value),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                initialValue: _editedUser.bio, // Add bio field
+                decoration: const InputDecoration(labelText: "Bio"),
+                maxLines: 3, // Allow multiline bio input
+                onSaved: (value) => _editedUser = _editedUser.copyWith(bio: value),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _saveProfile,
+                child: const Text("Save"),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildEditableField(String label, String value, {int maxLines = 1, bool isEditable = true}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 14,
-            ),
-          ),
-          TextFormField(
-            initialValue: value,
-            maxLines: maxLines,
-            readOnly: !isEditable,
-            decoration: const InputDecoration(
-              border: UnderlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(vertical: 8),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDropdownField(String label, String value, List<String> options) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 14,
-            ),
-          ),
-          DropdownButtonFormField<String>(
-            value: value,
-            onChanged: (newValue) {},
-            items: options.map((option) {
-              return DropdownMenuItem(
-                value: option,
-                child: Text(option),
-              );
-            }).toList(),
-            decoration: const InputDecoration(
-              border: UnderlineInputBorder(),
-            ),
-          ),
-        ],
       ),
     );
   }

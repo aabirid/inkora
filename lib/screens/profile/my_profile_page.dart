@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:inkora/models/book.dart';
 import 'package:inkora/models/booklist.dart';
+import 'package:inkora/models/user.dart';
 import 'package:inkora/screens/book/book_overview.dart';
 import 'package:inkora/screens/book/booklist_overview.dart';
 import 'package:inkora/screens/profile/profile_edit_page.dart';
 import 'package:inkora/widgets/simple_book_card.dart';
 import 'package:inkora/widgets/simple_booklist_card.dart';
+import 'dart:io';
 
 class MyProfilePage extends StatefulWidget {
-  const MyProfilePage({super.key});
+  final User currentUser;
+
+  const MyProfilePage({super.key, required this.currentUser});
 
   @override
   State<MyProfilePage> createState() => _MyProfilePageState();
 }
 
 class _MyProfilePageState extends State<MyProfilePage> {
+  late User _user; // Mutable user instance
   int selectedTab = 0;
 
   final List<Book> myBooks = [
@@ -64,6 +69,12 @@ class _MyProfilePageState extends State<MyProfilePage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _user = widget.currentUser; // Initialize with the passed user
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
@@ -89,9 +100,12 @@ class _MyProfilePageState extends State<MyProfilePage> {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 40,
-            backgroundImage: AssetImage('assets/images/profile_default.jpeg'),
+            backgroundImage: _user.photo != null
+                ? FileImage(
+                    File(_user.photo!)) // Use FileImage for local images
+                : const AssetImage("assets/images/profile_default.jpeg"),
           ),
           const SizedBox(height: 16),
           Row(
@@ -103,28 +117,37 @@ class _MyProfilePageState extends State<MyProfilePage> {
             ],
           ),
           const SizedBox(height: 16),
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                'Sara Jane',
-                style: TextStyle(
+                '${_user.firstName} ${_user.lastName}',
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
               ),
-              Text("Breathing books that's how I live"),
-              Text('Coming Soon... 🔔'),
+              Text(_user.username),
+              Text(_user.email),
+              Text(_user.bio ?? ""),
             ],
           ),
           const SizedBox(height: 16),
           OutlinedButton(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ProfileEditPage(),
-              ),
-            ),
+            onPressed: () async {
+              final updatedUser = await Navigator.push<User>(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProfileEditPage(user: _user),
+                ),
+              );
+
+              if (updatedUser != null) {
+                setState(() {
+                  _user = updatedUser; // Update local state
+                });
+              }
+            },
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 40),
             ),
@@ -146,12 +169,15 @@ class _MyProfilePageState extends State<MyProfilePage> {
 
   Widget _buildTabIcon(IconData icon, int index) {
     return Expanded(
-      child: IconButton(
-        icon: Icon(
-          icon,
-          color: selectedTab == index ? Colors.green : Colors.grey,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: IconButton(
+          icon: Icon(
+            icon,
+            color: selectedTab == index ? Colors.green : Colors.grey,
+          ),
+          onPressed: () => setState(() => selectedTab = index),
         ),
-        onPressed: () => setState(() => selectedTab = index),
       ),
     );
   }
@@ -178,6 +204,10 @@ class _MyProfilePageState extends State<MyProfilePage> {
   }
 
   Widget _buildContentGrid(BuildContext context, List<dynamic> items) {
+    if (items.isEmpty) {
+      return const Center(child: Text("No items available"));
+    }
+
     return GridView.builder(
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 3,
@@ -201,7 +231,8 @@ class _MyProfilePageState extends State<MyProfilePage> {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => BooklistOverview(booklist: items[index]),
+                  builder: (context) =>
+                      BooklistOverview(booklist: items[index]),
                 ),
               ),
             ),

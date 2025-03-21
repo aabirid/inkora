@@ -26,6 +26,7 @@ class ProfileCard extends StatelessWidget {
               : AssetImage('assets/images/profile_default.jpeg'),
         ),
         title: Text("${user.firstName} ${user.lastName}"),
+        subtitle: Text("@${user.username}"),  // Added username display
         trailing: ElevatedButton(
           onPressed: () {},
           style: ElevatedButton.styleFrom(

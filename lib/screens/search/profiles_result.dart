@@ -5,7 +5,7 @@ import 'package:inkora/models/user.dart';
 class ProfilesResult extends StatelessWidget {
   final String query;
 
-  ProfilesResult({required this.query});
+  ProfilesResult({super.key, required this.query});
 
   final List<User> profiles = [
     User(
@@ -18,6 +18,8 @@ class ProfilesResult extends StatelessWidget {
       registrationDate: DateTime.now(),
       status: "active",
       photo: 'assets/images/book_cover3.jpeg',
+      username: 'maxjackson',  // New field
+      bio: 'Software Developer from California',  // New field
     ),
     User(
       id: 2,
@@ -29,6 +31,8 @@ class ProfilesResult extends StatelessWidget {
       registrationDate: DateTime.now(),
       status: "active",
       photo: 'assets/images/book_cover2.jpeg',
+      username: 'miapotter',  // New field
+      bio: 'Lover of books and travel',  // New field
     ),
   ];
 
@@ -36,7 +40,8 @@ class ProfilesResult extends StatelessWidget {
   Widget build(BuildContext context) {
     List<User> filteredProfiles = profiles.where((user) {
       return user.firstName.toLowerCase().contains(query.toLowerCase()) ||
-             user.lastName.toLowerCase().contains(query.toLowerCase());
+             user.lastName.toLowerCase().contains(query.toLowerCase()) ||
+             user.username.toLowerCase().contains(query.toLowerCase());
     }).toList();
 
     return filteredProfiles.isEmpty

@@ -66,8 +66,8 @@ class _NewChapterPageState extends State<NewChapterPage> {
                     'Save',
                     style: TextStyle(
                       color: _titleController.text.isNotEmpty
-                          ? Colors.white
-                          : Colors.white.withOpacity(0.5),
+                          ? theme.primaryColor
+                          : theme.primaryColor.withOpacity(0.5),
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -81,34 +81,6 @@ class _NewChapterPageState extends State<NewChapterPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Chapter Number/Position
-              Row(
-                children: [
-                  Text(
-                    'Chapter Position:',
-                    style: theme.textTheme.bodyLarge,
-                  ),
-                  const SizedBox(width: 16),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        const Text('End of Book'),
-                        const SizedBox(width: 4),
-                        Icon(Icons.keyboard_arrow_down,
-                            size: 18, color: Colors.grey.shade600),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
               // Chapter Title
               TextField(
                 controller: _titleController,
@@ -143,65 +115,6 @@ class _NewChapterPageState extends State<NewChapterPage> {
           ),
         ),
       ),
-      // bottomNavigationBar: Container(
-      //   padding: const EdgeInsets.all(16.0),
-      //   decoration: BoxDecoration(
-      //     color: theme.scaffoldBackgroundColor,
-      //     boxShadow: [
-      //       BoxShadow(
-      //         color: Colors.black.withOpacity(0.05),
-      //         blurRadius: 5,
-      //         offset: const Offset(0, -1),
-      //       ),
-      //     ],
-      //   ),
-      // child: Row(
-      //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      //   children: [
-      //     _buildToolbarButton(
-      //       icon: Icons.format_bold,
-      //       tooltip: 'Bold',
-      //       onPressed: () {},
-      //     ),
-      //     _buildToolbarButton(
-      //       icon: Icons.format_italic,
-      //       tooltip: 'Italic',
-      //       onPressed: () {},
-      //     ),
-      //     _buildToolbarButton(
-      //       icon: Icons.format_underlined,
-      //       tooltip: 'Underline',
-      //       onPressed: () {},
-      //     ),
-      //     _buildToolbarButton(
-      //       icon: Icons.format_list_bulleted,
-      //       tooltip: 'Bullet List',
-      //       onPressed: () {},
-      //     ),
-      //     _buildToolbarButton(
-      //       icon: Icons.format_list_numbered,
-      //       tooltip: 'Numbered List',
-      //       onPressed: () {},
-      //     ),
-      //     _buildToolbarButton(
-      //       icon: Icons.format_quote,
-      //       tooltip: 'Quote',
-      //       onPressed: () {},
-      //     ),
-      //   ],
-      // ),),
     );
   }
-
-  // Widget _buildToolbarButton({
-  //   required IconData icon,
-  //   required String tooltip,
-  //   required VoidCallback onPressed,
-  // }) {
-  //   return IconButton(
-  //     icon: Icon(icon),
-  //     tooltip: tooltip,
-  //     onPressed: onPressed,
-  //   );
-  // }
 }

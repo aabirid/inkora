@@ -94,7 +94,7 @@ class _EditBookPageState extends State<EditBookPage> {
                   onEdit: () => _editChapter(index),
                   onDelete: () => _deleteChapter(index),
                 );
-              }).toList(),
+              }),
             ],
           ),
         ),

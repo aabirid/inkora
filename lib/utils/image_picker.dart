@@ -38,18 +38,15 @@ class ImagePickerService {
   // Helper method to show a dialog with sample images
   static Future<String?> _showSampleImagePicker(BuildContext context) async {
     final sampleImages = [
-      'assets/images/fantasy.jpg',
-      'assets/images/scifi.jpg',
-      'assets/images/mystery.jpg',
-      'assets/images/classics.jpg',
-      'assets/images/romance.jpg',
-      'assets/images/horror.jpg',
-      'assets/images/poetry.jpg',
+      'assets/images/fantasy.jpeg',
+      'assets/images/mystery.jpeg',
+      'assets/images/classics.jpeg',
+      'assets/images/romance.jpeg',
+      'assets/images/horror.jpeg',
+      'assets/images/poetry.jpeg',
       'assets/images/book_cover.jpeg',
       'assets/images/book_cover2.jpeg',
-      'assets/images/book_cover3.jpeg',
-      'assets/images/map.jpg',
-      'assets/images/hogwarts.jpg',
+      'assets/images/book_cover3.jpeg',      
     ];
     
     return showDialog<String>(

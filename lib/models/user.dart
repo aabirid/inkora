@@ -10,6 +10,8 @@ class User {
   final DateTime registrationDate;
   final String status;
   final String? photo;
+  final String username;
+  final String? bio;
 
   User({
     required this.id,
@@ -23,6 +25,8 @@ class User {
     required this.registrationDate,
     required this.status,
     this.photo,
+    required this.username,
+    this.bio,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -38,6 +42,8 @@ class User {
       registrationDate: DateTime.parse(json['registrationDate'] ?? DateTime.now().toString()),
       status: json['status'] ?? 'active',
       photo: json['photo'],
+      username: json['username'] ?? '',
+      bio: json['bio'],
     );
   }
 
@@ -54,6 +60,40 @@ class User {
       'registrationDate': registrationDate.toIso8601String(),
       'status': status,
       'photo': photo,
+      'username': username,
+      'bio': bio,
     };
+  }
+
+  User copyWith({
+    int? id,
+    String? lastName,
+    String? firstName,
+    String? email,
+    String? password,
+    DateTime? birthDate,
+    String? gender,
+    String? address,
+    DateTime? registrationDate,
+    String? status,
+    String? photo,
+    String? username,
+    String? bio,
+  }) {
+    return User(
+      id: id ?? this.id,
+      lastName: lastName ?? this.lastName,
+      firstName: firstName ?? this.firstName,
+      email: email ?? this.email,
+      password: password ?? this.password,
+      birthDate: birthDate ?? this.birthDate,
+      gender: gender ?? this.gender,
+      address: address ?? this.address,
+      registrationDate: registrationDate ?? this.registrationDate,
+      status: status ?? this.status,
+      photo: photo ?? this.photo,
+      username: username ?? this.username,
+      bio: bio ?? this.bio,
+    );
   }
 }
