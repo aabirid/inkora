@@ -24,13 +24,21 @@ class _SearchPageState extends State<SearchPage> {
   ];
 
   void _performSearch() {
-    String query = _searchController.text;
+    String query = _searchController.text.trim();
     if (query.isNotEmpty) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => SearchResultsPage(query: query)),
+        MaterialPageRoute(
+            builder: (context) => SearchResultsPage(query: query)),
       );
     }
+  }
+
+  void _searchByGenre(String genre) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => SearchResultsPage(query: genre)),
+    );
   }
 
   @override
@@ -68,13 +76,7 @@ class _SearchPageState extends State<SearchPage> {
           itemBuilder: (context, index) {
             return GestureDetector(
               onTap: () {
-                // Search by genre
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          SearchResultsPage(query: genres[index]["name"]!)),
-                );
+                _searchByGenre(genres[index]["name"]!);
               },
               child: Column(
                 children: [

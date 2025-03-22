@@ -1,3 +1,5 @@
+import 'package:inkora/models/category.dart';
+
 class Book {
   final int id;
   final String title;
@@ -8,7 +10,7 @@ class Book {
   final int chapters;
   final String status;
   final DateTime? publishedDate;
-  final List<String>? categories;
+  final List<Category>? categories;
 
   Book({
     required this.id,
@@ -23,10 +25,10 @@ class Book {
     this.categories,
   });
 
-  // Factory constructor to convert JSON to Book object
+  // Convert JSON to Book
   factory Book.fromJson(Map<String, dynamic> json) {
     return Book(
-      id: json['id'] ?? '',
+      id: json['id'] ?? 0,
       title: json['title'] ?? 'Unknown',
       author: json['author'] ?? 'Unknown',
       coverImage: json['coverImage'] ?? 'assets/default_cover.png',
@@ -34,12 +36,14 @@ class Book {
       rating: (json['rating'] ?? 0).toDouble(),
       chapters: json['chapters'] ?? 0,
       status: json['status'] ?? 'Ongoing',
-      publishedDate: json['publishedDate'] != null 
-          ? DateTime.parse(json['publishedDate']) 
+      publishedDate: json['publishedDate'] != null
+          ? DateTime.parse(json['publishedDate'])
           : null,
-      categories: json['categories'] != null 
-          ? List<String>.from(json['categories']) 
-          : null,
+      categories: json['categories'] != null
+          ? (json['categories'] as List)
+              .map((cat) => Category.fromJson(cat))
+              .toList()
+          : [],
     );
   }
 
@@ -55,8 +59,7 @@ class Book {
       'chapters': chapters,
       'status': status,
       'publishedDate': publishedDate?.toIso8601String(),
-      'categories': categories,
+      'categories': categories?.map((c) => c.toJson()).toList(),
     };
   }
 }
-
