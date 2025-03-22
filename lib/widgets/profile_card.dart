@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:inkora/models/user.dart';
 import 'package:inkora/screens/profile/profile_page.dart';
+import 'package:provider/provider.dart';
+import 'package:inkora/providers/follow_provider.dart';
 
 class ProfileCard extends StatelessWidget {
   final User user;
@@ -9,12 +11,15 @@ class ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final followProvider = Provider.of<FollowProvider>(context);
+    bool isFollowing = followProvider.isFollowing(user.id);
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ProfilePage(user: user), // Pass the selected user
+            builder: (context) => ProfilePage(user: user),
           ),
         );
       },
@@ -23,20 +28,22 @@ class ProfileCard extends StatelessWidget {
           radius: 27,
           backgroundImage: user.photo != null
               ? AssetImage(user.photo!)
-              : AssetImage('assets/images/profile_default.jpeg'),
+              : const AssetImage('assets/images/profile_default.jpeg'),
         ),
         title: Text("${user.firstName} ${user.lastName}"),
-        subtitle: Text("@${user.username}"),  // Added username display
+        subtitle: Text("@${user.username}"),
         trailing: ElevatedButton(
-          onPressed: () {},
+          onPressed: () {
+            followProvider.toggleFollow(user.id);
+          },
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green.shade400,
+            backgroundColor: isFollowing ? Colors.grey : Colors.green.shade400,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
             ),
           ),
-          child: Text("Follow"),
+          child: Text(isFollowing ? "Unfollow" : "Follow"),
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:inkora/models/booklist.dart';
 import 'package:inkora/models/user.dart';
 import 'package:inkora/models/book.dart';
@@ -6,10 +7,10 @@ import 'package:inkora/screens/book/book_overview.dart';
 import 'package:inkora/screens/book/booklist_overview.dart';
 import 'package:inkora/widgets/simple_book_card.dart';
 import 'package:inkora/widgets/simple_booklist_card.dart';
-import 'package:inkora/theme/theme.dart';
+import 'package:inkora/providers/follow_provider.dart';
 
 class ProfilePage extends StatefulWidget {
-  final User user; // Accept User parameter
+  final User user;
 
   const ProfilePage({super.key, required this.user});
 
@@ -19,18 +20,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   int selectedTab = 0;
-  late final User currentUser; // Declare variable for user
-
-  bool isFollowing = false; // Track if the current user is following
-
-  @override
-  void initState() {
-    super.initState();
-    currentUser = widget.user; // Get user passed from the constructor
-
-    // Optionally, you can check if the current user is already following this profile.
-    // For now, I'm just initializing it as false. Update this with logic if needed.
-  }
+  late final User currentUser;
 
   final List<Book> myBooks = [
     Book(
@@ -78,25 +68,24 @@ class _ProfilePageState extends State<ProfilePage> {
     ),
   ];
 
-  // Function to toggle follow/unfollow
-  void toggleFollow() {
-    setState(() {
-      isFollowing = !isFollowing; // Toggle the follow state
-    });
-
-    // Optionally, send a request to the backend to update the follow status in the database.
-    // Example: sendFollowRequest(currentUser.id);
+  @override
+  void initState() {
+    super.initState();
+    currentUser = widget.user;
   }
 
   @override
   Widget build(BuildContext context) {
+    final followProvider = Provider.of<FollowProvider>(context);
+    bool isFollowing = followProvider.isFollowing(currentUser.id);
+
     return Scaffold(
       appBar: AppBar(
         title: Text('${currentUser.firstName} ${currentUser.lastName}'),
       ),
       body: Column(
         children: [
-          _buildProfileSection(),
+          _buildProfileSection(isFollowing, followProvider),
           const Divider(height: 1),
           _buildTabBar(),
           const Divider(height: 1),
@@ -112,7 +101,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildProfileSection() {
+  Widget _buildProfileSection(bool isFollowing, FollowProvider followProvider) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -149,19 +138,19 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
           ),
           const SizedBox(height: 16),
-          // Follow Button (with conditional styling)
           isFollowing
               ? OutlinedButton(
-                  onPressed: toggleFollow,
+                  onPressed: () => followProvider.toggleFollow(currentUser.id),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Theme.of(context).primaryColor,
                     side: BorderSide(color: Theme.of(context).primaryColor),
                     minimumSize: const Size(double.infinity, 40),
                   ),
-                  child: Text('Unfollow', style: TextStyle(color: Theme.of(context).primaryColor)),
+                  child: Text('Unfollow',
+                      style: TextStyle(color: Theme.of(context).primaryColor)),
                 )
               : ElevatedButton(
-                  onPressed: toggleFollow,
+                  onPressed: () => followProvider.toggleFollow(currentUser.id),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 40),
                     backgroundColor: Theme.of(context).primaryColor,

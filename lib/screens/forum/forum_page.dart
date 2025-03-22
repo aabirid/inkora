@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inkora/screens/forum/chat_room_page.dart';
-import 'package:inkora/components/data_provider.dart';
+import 'package:inkora/providers/data_provider.dart';
 import 'package:inkora/models/group.dart';
 import 'package:inkora/utils/image_picker.dart';
 import 'dart:io';
