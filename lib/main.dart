@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:inkora/providers/auth_provider.dart';
 import 'package:inkora/providers/follow_provider.dart';
 import 'package:inkora/providers/forum_data_provider.dart';
-import 'package:inkora/providers/join_provider.dart';
 import 'package:inkora/screens/auth/login_page.dart';
 import 'package:inkora/theme/theme.dart';
 import 'package:provider/provider.dart';
@@ -15,7 +14,6 @@ void main() {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => FollowProvider()),
         ChangeNotifierProvider(create: (_) => FollowProvider()),
-        ChangeNotifierProvider(create: (_) => JoinProvider()),
         ChangeNotifierProxyProvider<AuthProvider, ForumDataProvider>(
           create: (_) => ForumDataProvider(),
           update: (_, authProvider, forumProvider) {

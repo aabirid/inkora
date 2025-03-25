@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:inkora/screens/forum/group_overview.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -22,7 +23,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ImagePicker _picker = ImagePicker();
-  
+
   // Initialize with default values instead of using 'late'
   Group? _currentGroup;
   List<Message> _messages = [];
@@ -41,7 +42,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   void _loadGroupData() {
     final provider = Provider.of<ForumDataProvider>(context, listen: false);
-    
+
     // Find the current group
     final group = provider.groups.firstWhere(
       (group) => group.id == widget.groupId,
@@ -74,13 +75,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     if (_isSendingMessage || _messageController.text.trim().isEmpty) {
       return;
     }
-    
+
     setState(() {
       _isSendingMessage = true;
     });
-    
+
     final provider = Provider.of<ForumDataProvider>(context, listen: false);
-    
+
     final newMessage = provider.addMessage(
       provider.currentUser.id,
       widget.groupId,
@@ -99,7 +100,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           curve: Curves.easeOut,
         );
       }
-      
+
       // Reset the sending flag
       setState(() {
         _isSendingMessage = false;
@@ -120,21 +121,19 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ForumDataProvider>(context);
-    
+
     // Get the latest messages from the provider
     _messages = provider.getGroupMessages(widget.groupId);
-    
+
     // If data is not loaded yet, get the current group from provider
-    if (_currentGroup == null) {
-      _currentGroup = provider.groups.firstWhere(
-        (group) => group.id == widget.groupId,
-        orElse: () => provider.groups.first,
-      );
-    }
+    _currentGroup ??= provider.groups.firstWhere(
+      (group) => group.id == widget.groupId,
+      orElse: () => provider.groups.first,
+    );
 
     // Check if user is the creator of the group
     final bool isCreator = _currentGroup?.creatorId == provider.currentUser.id;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -175,7 +174,12 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             icon: const Icon(Icons.info_outline),
             onPressed: () {
               if (_currentGroup != null) {
-                _showGroupInfoDialog();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GroupOverview(group: _currentGroup!),
+                  ),
+                );
               }
             },
           ),
@@ -191,7 +195,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             },
             itemBuilder: (BuildContext context) {
               final List<PopupMenuEntry<String>> menuItems = [];
-              
+
               if (isCreator) {
                 // Options for group creator
                 menuItems.addAll([
@@ -211,7 +215,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                       children: [
                         Icon(Icons.delete, color: Colors.red, size: 20),
                         SizedBox(width: 8),
-                        Text('Delete Group', style: TextStyle(color: Colors.red)),
+                        Text('Delete Group',
+                            style: TextStyle(color: Colors.red)),
                       ],
                     ),
                   ),
@@ -231,7 +236,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                   ),
                 );
               }
-              
+
               return menuItems;
             },
           ),
@@ -247,79 +252,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 _buildMessageInput(),
               ],
             ),
-    );
-  }
-
-  void _showGroupInfoDialog() {
-    if (_currentGroup == null) return;
-    
-    final provider = Provider.of<ForumDataProvider>(context, listen: false);
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(_currentGroup!.name),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: CircleAvatar(
-                  radius: 40,
-                  backgroundImage: AssetImage(_currentGroup!.photo ??
-                      provider.getFallbackGroupImage(_currentGroup!.id)),
-                  onBackgroundImageError: (exception, stackTrace) {
-                    // Fallback for image loading errors
-                  },
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text('Description: ${_currentGroup!.description ?? 'No description'}'),
-              const SizedBox(height: 8),
-              Text('Created: ${_formatDate(_currentGroup!.creationDate)}'),
-              const SizedBox(height: 8),
-              Text('Members: ${_currentGroup!.members?.length ?? 0}'),
-              const SizedBox(height: 16),
-              const Text('Members List:',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              ..._currentGroup!.members?.map((userId) {
-                    final user = provider.getUserById(userId);
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 12,
-                            backgroundImage: AssetImage(user.photo ??
-                                provider.getFallbackUserImage(user.id)),
-                            onBackgroundImageError: (exception, stackTrace) {
-                              // Fallback for image loading errors
-                            },
-                          ),
-                          const SizedBox(width: 8),
-                          Text('${user.firstName} ${user.lastName}'),
-                          if (userId == _currentGroup!.creatorId)
-                            const Padding(
-                              padding: EdgeInsets.only(left: 4),
-                              child: Text('(Creator)',
-                                  style: TextStyle(fontStyle: FontStyle.italic)),
-                            ),
-                        ],
-                      ),
-                    );
-                  }).toList() ?? [],
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -374,9 +306,10 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   void _showEditGroupDialog() {
     if (_currentGroup == null) return;
-    
+
     final nameController = TextEditingController(text: _currentGroup!.name);
-    final descriptionController = TextEditingController(text: _currentGroup!.description ?? '');
+    final descriptionController =
+        TextEditingController(text: _currentGroup!.description ?? '');
     _selectedGroupPhoto = _currentGroup!.photo;
     _imageFile = null;
 
@@ -393,18 +326,23 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                   onTap: () => _showPhotoSelectionDialog(setState),
                   child: CircleAvatar(
                     radius: 40,
-                    backgroundImage: _imageFile != null 
+                    backgroundImage: _imageFile != null
                         ? FileImage(_imageFile!) as ImageProvider
                         : _selectedGroupPhoto != null
                             ? AssetImage(_selectedGroupPhoto!)
-                            : AssetImage(_currentGroup!.photo ?? 'assets/images/add_photo.png'),
-                    child: _imageFile == null && _selectedGroupPhoto == null && _currentGroup!.photo == null
-                        ? const Icon(Icons.add_a_photo, size: 30, color: Colors.white70)
+                            : AssetImage(_currentGroup!.photo ??
+                                'assets/images/add_photo.png'),
+                    child: _imageFile == null &&
+                            _selectedGroupPhoto == null &&
+                            _currentGroup!.photo == null
+                        ? const Icon(Icons.add_a_photo,
+                            size: 30, color: Colors.white70)
                         : null,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text('Tap to change photo', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                const Text('Tap to change photo',
+                    style: TextStyle(fontSize: 12, color: Colors.grey)),
                 const SizedBox(height: 16),
                 TextField(
                   controller: nameController,
@@ -433,24 +371,27 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             ElevatedButton(
               onPressed: () {
                 if (nameController.text.trim().isNotEmpty) {
-                  final provider = Provider.of<ForumDataProvider>(context, listen: false);
-                  
+                  final provider =
+                      Provider.of<ForumDataProvider>(context, listen: false);
+
                   final updatedGroup = _currentGroup!.copyWith(
                     name: nameController.text.trim(),
-                    description: descriptionController.text.trim().isNotEmpty 
-                        ? descriptionController.text.trim() 
+                    description: descriptionController.text.trim().isNotEmpty
+                        ? descriptionController.text.trim()
                         : null,
                     photo: _selectedGroupPhoto,
                   );
-                  
+
                   provider.updateGroup(updatedGroup);
                   setState(() {
                     _currentGroup = updatedGroup;
                   });
                   Navigator.pop(context);
-                  
+
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Group "${nameController.text.trim()}" updated successfully!')),
+                    SnackBar(
+                        content: Text(
+                            'Group "${nameController.text.trim()}" updated successfully!')),
                   );
                 }
               },
@@ -464,12 +405,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   void _showDeleteConfirmationDialog() {
     if (_currentGroup == null) return;
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Group'),
-        content: Text('Are you sure you want to delete "${_currentGroup!.name}"? This action cannot be undone.'),
+        content: Text(
+            'Are you sure you want to delete "${_currentGroup!.name}"? This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -478,11 +420,12 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           TextButton(
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             onPressed: () {
-              final provider = Provider.of<ForumDataProvider>(context, listen: false);
+              final provider =
+                  Provider.of<ForumDataProvider>(context, listen: false);
               provider.deleteGroup(_currentGroup!.id);
               Navigator.pop(context); // Close dialog
               Navigator.pop(context); // Go back to forum page
-              
+
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Group deleted successfully')),
               );
@@ -496,14 +439,15 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   void _showLeaveGroupConfirmationDialog() {
     if (_currentGroup == null) return;
-    
+
     final provider = Provider.of<ForumDataProvider>(context, listen: false);
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Leave Group'),
-        content: Text('Are you sure you want to leave "${_currentGroup!.name}"?'),
+        content:
+            Text('Are you sure you want to leave "${_currentGroup!.name}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -516,17 +460,18 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               if (_currentGroup!.members != null) {
                 final updatedMembers = List<int>.from(_currentGroup!.members!)
                   ..remove(provider.currentUser.id);
-                
+
                 final updatedGroup = _currentGroup!.copyWith(
                   members: updatedMembers,
                 );
-                
+
                 provider.updateGroup(updatedGroup);
                 Navigator.pop(context); // Close dialog
                 Navigator.pop(context); // Go back to forum page
-                
+
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('You have left "${_currentGroup!.name}"')),
+                  SnackBar(
+                      content: Text('You have left "${_currentGroup!.name}"')),
                 );
               }
             },
@@ -539,13 +484,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   Widget _buildChatMessages() {
     final provider = Provider.of<ForumDataProvider>(context, listen: false);
-    
+
     if (_messages.isEmpty) {
       return const Center(
         child: Text('No messages yet. Start the conversation!'),
       );
     }
-    
+
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.all(16),
@@ -822,13 +767,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     if (_isSendingMessage) {
       return;
     }
-    
+
     setState(() {
       _isSendingMessage = true;
     });
-    
+
     final provider = Provider.of<ForumDataProvider>(context, listen: false);
-    
+
     provider.addMessage(
       provider.currentUser.id,
       widget.groupId,
@@ -837,7 +782,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     );
 
     // Don't update state here, let the provider notify us
-    
+
     // Scroll to bottom after adding image
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -847,7 +792,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           curve: Curves.easeOut,
         );
       }
-      
+
       // Reset the sending flag
       setState(() {
         _isSendingMessage = false;
@@ -874,4 +819,3 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 }
-
