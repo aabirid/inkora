@@ -1,56 +1,61 @@
 import 'package:flutter/material.dart';
-import 'package:inkora/providers/forum_data_provider.dart';
-import 'package:inkora/models/group.dart';
-import 'package:inkora/models/message.dart';
+import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import '../../models/group.dart';
+import '../../models/message.dart';
+import '../../providers/forum_data_provider.dart';
 
 class ChatRoomPage extends StatefulWidget {
   final int groupId;
 
   const ChatRoomPage({
-    super.key,
+    Key? key,
     required this.groupId,
-  });
+  }) : super(key: key);
 
   @override
   _ChatRoomPageState createState() => _ChatRoomPageState();
 }
 
-class ImagePickerService {
-  static Future<String?> pickImageFromGallery() async {
-    final ImagePicker _picker = ImagePicker();
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    return image?.path;
-  }
-
-  static Future<String?> pickImageFromCamera() async {
-    final ImagePicker _picker = ImagePicker();
-    final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
-    return photo?.path;
-  }
-}
-
 class _ChatRoomPageState extends State<ChatRoomPage> {
   final TextEditingController _messageController = TextEditingController();
-  late Group _currentGroup;
-  late List<Message> _messages;
   final ScrollController _scrollController = ScrollController();
+  final ImagePicker _picker = ImagePicker();
+  
+  // Initialize with default values instead of using 'late'
+  Group? _currentGroup;
+  List<Message> _messages = [];
+  bool _isLoading = true;
+  String? _selectedGroupPhoto;
+  File? _imageFile;
+  bool _isSendingMessage = false; // Flag to prevent duplicate sends
 
   @override
   void initState() {
     super.initState();
-    _loadGroupData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadGroupData();
+    });
   }
 
   void _loadGroupData() {
+    final provider = Provider.of<ForumDataProvider>(context, listen: false);
+    
     // Find the current group
-    _currentGroup = ForumDataProvider.groups.firstWhere(
+    final group = provider.groups.firstWhere(
       (group) => group.id == widget.groupId,
-      orElse: () => ForumDataProvider.groups.first,
+      orElse: () => provider.groups.first,
     );
 
     // Load messages for this group
-    _messages = ForumDataProvider.getGroupMessages(widget.groupId);
+    final messages = provider.getGroupMessages(widget.groupId);
+
+    setState(() {
+      _currentGroup = group;
+      _messages = messages;
+      _isLoading = false;
+    });
 
     // Scroll to bottom after frame is rendered
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -65,40 +70,78 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   void _sendMessage() {
-    if (_messageController.text.trim().isNotEmpty) {
-      final newMessage = ForumDataProvider.addMessage(
-        ForumDataProvider.currentUser.id,
-        widget.groupId,
-        _messageController.text.trim(),
-      );
-
-      setState(() {
-        _messages.add(newMessage);
-      });
-      _messageController.clear();
-
-      // Scroll to bottom after adding the message
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        }
-      });
+    // Prevent duplicate sends
+    if (_isSendingMessage || _messageController.text.trim().isEmpty) {
+      return;
     }
+    
+    setState(() {
+      _isSendingMessage = true;
+    });
+    
+    final provider = Provider.of<ForumDataProvider>(context, listen: false);
+    
+    final newMessage = provider.addMessage(
+      provider.currentUser.id,
+      widget.groupId,
+      _messageController.text.trim(),
+    );
+
+    // Don't update state here, let the provider notify us
+    _messageController.clear();
+
+    // Scroll to bottom after adding the message
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+      
+      // Reset the sending flag
+      setState(() {
+        _isSendingMessage = false;
+      });
+    });
+  }
+
+  Future<String?> _pickImageFromGallery() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    return image?.path;
+  }
+
+  Future<String?> _pickImageFromCamera() async {
+    final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
+    return photo?.path;
   }
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<ForumDataProvider>(context);
+    
+    // Get the latest messages from the provider
+    _messages = provider.getGroupMessages(widget.groupId);
+    
+    // If data is not loaded yet, get the current group from provider
+    if (_currentGroup == null) {
+      _currentGroup = provider.groups.firstWhere(
+        (group) => group.id == widget.groupId,
+        orElse: () => provider.groups.first,
+      );
+    }
+
+    // Check if user is the creator of the group
+    final bool isCreator = _currentGroup?.creatorId == provider.currentUser.id;
+    
     return Scaffold(
       appBar: AppBar(
         title: Row(
           children: [
             CircleAvatar(
-              backgroundImage: AssetImage(_currentGroup.photo ??
-                  ForumDataProvider.getFallbackGroupImage(_currentGroup.id)),
+              backgroundImage: AssetImage(_currentGroup?.photo ??
+                  provider.getFallbackGroupImage(widget.groupId)),
               radius: 16,
               onBackgroundImageError: (exception, stackTrace) {
                 // Fallback for image loading errors
@@ -110,14 +153,14 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  _currentGroup.name,
+                  _currentGroup?.name ?? 'Loading...',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  '${_currentGroup.members?.length ?? 0} Members',
+                  '${_currentGroup?.members?.length ?? 0} Members',
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 12,
@@ -131,31 +174,91 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           IconButton(
             icon: const Icon(Icons.info_outline),
             onPressed: () {
-              _showGroupInfoDialog();
+              if (_currentGroup != null) {
+                _showGroupInfoDialog();
+              }
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {},
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'edit' && isCreator) {
+                _showEditGroupDialog();
+              } else if (value == 'delete' && isCreator) {
+                _showDeleteConfirmationDialog();
+              } else if (value == 'leave' && !isCreator) {
+                _showLeaveGroupConfirmationDialog();
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              final List<PopupMenuEntry<String>> menuItems = [];
+              
+              if (isCreator) {
+                // Options for group creator
+                menuItems.addAll([
+                  const PopupMenuItem<String>(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit, size: 20),
+                        SizedBox(width: 8),
+                        Text('Edit Group'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete, color: Colors.red, size: 20),
+                        SizedBox(width: 8),
+                        Text('Delete Group', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                  ),
+                ]);
+              } else {
+                // Options for group member
+                menuItems.add(
+                  const PopupMenuItem<String>(
+                    value: 'leave',
+                    child: Row(
+                      children: [
+                        Icon(Icons.exit_to_app, color: Colors.orange, size: 20),
+                        SizedBox(width: 8),
+                        Text('Leave Group'),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              
+              return menuItems;
+            },
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: _buildChatMessages(),
-          ),
-          _buildMessageInput(),
-        ],
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                Expanded(
+                  child: _buildChatMessages(),
+                ),
+                _buildMessageInput(),
+              ],
+            ),
     );
   }
 
   void _showGroupInfoDialog() {
+    if (_currentGroup == null) return;
+    
+    final provider = Provider.of<ForumDataProvider>(context, listen: false);
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(_currentGroup.name),
+        title: Text(_currentGroup!.name),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -164,27 +267,25 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               Center(
                 child: CircleAvatar(
                   radius: 40,
-                  backgroundImage: AssetImage(_currentGroup.photo ??
-                      ForumDataProvider.getFallbackGroupImage(
-                          _currentGroup.id)),
+                  backgroundImage: AssetImage(_currentGroup!.photo ??
+                      provider.getFallbackGroupImage(_currentGroup!.id)),
                   onBackgroundImageError: (exception, stackTrace) {
                     // Fallback for image loading errors
                   },
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                  'Description: ${_currentGroup.description ?? 'No description'}'),
+              Text('Description: ${_currentGroup!.description ?? 'No description'}'),
               const SizedBox(height: 8),
-              Text('Created: ${_formatDate(_currentGroup.creationDate)}'),
+              Text('Created: ${_formatDate(_currentGroup!.creationDate)}'),
               const SizedBox(height: 8),
-              Text('Members: ${_currentGroup.members?.length ?? 0}'),
+              Text('Members: ${_currentGroup!.members?.length ?? 0}'),
               const SizedBox(height: 16),
               const Text('Members List:',
                   style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              ..._currentGroup.members?.map((userId) {
-                    final user = ForumDataProvider.getUserById(userId);
+              ..._currentGroup!.members?.map((userId) {
+                    final user = provider.getUserById(userId);
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 4),
                       child: Row(
@@ -192,26 +293,23 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                           CircleAvatar(
                             radius: 12,
                             backgroundImage: AssetImage(user.photo ??
-                                ForumDataProvider.getFallbackUserImage(
-                                    user.id)),
+                                provider.getFallbackUserImage(user.id)),
                             onBackgroundImageError: (exception, stackTrace) {
                               // Fallback for image loading errors
                             },
                           ),
                           const SizedBox(width: 8),
                           Text('${user.firstName} ${user.lastName}'),
-                          if (userId == _currentGroup.creatorId)
+                          if (userId == _currentGroup!.creatorId)
                             const Padding(
                               padding: EdgeInsets.only(left: 4),
                               child: Text('(Creator)',
-                                  style:
-                                      TextStyle(fontStyle: FontStyle.italic)),
+                                  style: TextStyle(fontStyle: FontStyle.italic)),
                             ),
                         ],
                       ),
                     );
-                  }).toList() ??
-                  [],
+                  }).toList() ?? [],
             ],
           ),
         ),
@@ -225,7 +323,229 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     );
   }
 
+  void _showPhotoSelectionDialog(StateSetter setState) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Photo'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ElevatedButton.icon(
+              icon: const Icon(Icons.camera_alt),
+              label: const Text('Take Photo'),
+              onPressed: () async {
+                Navigator.pop(context);
+                final imagePath = await _pickImageFromCamera();
+                if (imagePath != null) {
+                  setState(() {
+                    _selectedGroupPhoto = imagePath;
+                    _imageFile = File(imagePath);
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.photo_library),
+              label: const Text('Choose from Gallery'),
+              onPressed: () async {
+                Navigator.pop(context);
+                final imagePath = await _pickImageFromGallery();
+                if (imagePath != null) {
+                  setState(() {
+                    _selectedGroupPhoto = imagePath;
+                    _imageFile = File(imagePath);
+                  });
+                }
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditGroupDialog() {
+    if (_currentGroup == null) return;
+    
+    final nameController = TextEditingController(text: _currentGroup!.name);
+    final descriptionController = TextEditingController(text: _currentGroup!.description ?? '');
+    _selectedGroupPhoto = _currentGroup!.photo;
+    _imageFile = null;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Edit Group'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GestureDetector(
+                  onTap: () => _showPhotoSelectionDialog(setState),
+                  child: CircleAvatar(
+                    radius: 40,
+                    backgroundImage: _imageFile != null 
+                        ? FileImage(_imageFile!) as ImageProvider
+                        : _selectedGroupPhoto != null
+                            ? AssetImage(_selectedGroupPhoto!)
+                            : AssetImage(_currentGroup!.photo ?? 'assets/images/add_photo.png'),
+                    child: _imageFile == null && _selectedGroupPhoto == null && _currentGroup!.photo == null
+                        ? const Icon(Icons.add_a_photo, size: 30, color: Colors.white70)
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text('Tap to change photo', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Group Name',
+                    hintText: 'Enter a name for your group',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Description',
+                    hintText: 'Enter a description (optional)',
+                  ),
+                  maxLines: 3,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (nameController.text.trim().isNotEmpty) {
+                  final provider = Provider.of<ForumDataProvider>(context, listen: false);
+                  
+                  final updatedGroup = _currentGroup!.copyWith(
+                    name: nameController.text.trim(),
+                    description: descriptionController.text.trim().isNotEmpty 
+                        ? descriptionController.text.trim() 
+                        : null,
+                    photo: _selectedGroupPhoto,
+                  );
+                  
+                  provider.updateGroup(updatedGroup);
+                  setState(() {
+                    _currentGroup = updatedGroup;
+                  });
+                  Navigator.pop(context);
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Group "${nameController.text.trim()}" updated successfully!')),
+                  );
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmationDialog() {
+    if (_currentGroup == null) return;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Group'),
+        content: Text('Are you sure you want to delete "${_currentGroup!.name}"? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () {
+              final provider = Provider.of<ForumDataProvider>(context, listen: false);
+              provider.deleteGroup(_currentGroup!.id);
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Go back to forum page
+              
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Group deleted successfully')),
+              );
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLeaveGroupConfirmationDialog() {
+    if (_currentGroup == null) return;
+    
+    final provider = Provider.of<ForumDataProvider>(context, listen: false);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Leave Group'),
+        content: Text('Are you sure you want to leave "${_currentGroup!.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.orange),
+            onPressed: () {
+              // Remove user from group members
+              if (_currentGroup!.members != null) {
+                final updatedMembers = List<int>.from(_currentGroup!.members!)
+                  ..remove(provider.currentUser.id);
+                
+                final updatedGroup = _currentGroup!.copyWith(
+                  members: updatedMembers,
+                );
+                
+                provider.updateGroup(updatedGroup);
+                Navigator.pop(context); // Close dialog
+                Navigator.pop(context); // Go back to forum page
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('You have left "${_currentGroup!.name}"')),
+                );
+              }
+            },
+            child: const Text('Leave'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildChatMessages() {
+    final provider = Provider.of<ForumDataProvider>(context, listen: false);
+    
+    if (_messages.isEmpty) {
+      return const Center(
+        child: Text('No messages yet. Start the conversation!'),
+      );
+    }
+    
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.all(16),
@@ -238,24 +558,21 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         }
 
         final message = _messages[index - 1];
-        final sender = ForumDataProvider.getUserById(message.senderId);
-        final isCurrentUser =
-            message.senderId == ForumDataProvider.currentUser.id;
+        final sender = provider.getUserById(message.senderId);
+        final isCurrentUser = message.senderId == provider.currentUser.id;
 
         if (message.imageUrl != null && message.imageUrl!.isNotEmpty) {
           return _buildImageMessage(
             message.imageUrl!,
             isCurrentUser: isCurrentUser,
-            avatar: sender.photo ??
-                ForumDataProvider.getFallbackUserImage(sender.id),
+            avatar: sender.photo ?? provider.getFallbackUserImage(sender.id),
             username: '${sender.firstName} ${sender.lastName}',
           );
         } else {
           return _buildMessage(
             message.content,
             isCurrentUser: isCurrentUser,
-            avatar: sender.photo ??
-                ForumDataProvider.getFallbackUserImage(sender.id),
+            avatar: sender.photo ?? provider.getFallbackUserImage(sender.id),
             username: '${sender.firstName} ${sender.lastName}',
           );
         }
@@ -295,7 +612,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             CircleAvatar(
               radius: 16,
               backgroundImage:
-                  AssetImage(avatar ?? 'assets/images/default_profile.jpg'),
+                  AssetImage(avatar ?? 'assets/images/default_profile.jpeg'),
               onBackgroundImageError: (exception, stackTrace) {
                 // Fallback for image loading errors
               },
@@ -358,7 +675,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             CircleAvatar(
               radius: 16,
               backgroundImage:
-                  AssetImage(avatar ?? 'assets/images/default_profile.jpg'),
+                  AssetImage(avatar ?? 'assets/images/default_profile.jpeg'),
               onBackgroundImageError: (exception, stackTrace) {
                 // Fallback for image loading errors
               },
@@ -383,20 +700,35 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 ),
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: Image.asset(
-                  imagePath,
-                  width: 200,
-                  height: 150,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 200,
-                      height: 150,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.broken_image),
-                    );
-                  },
-                ),
+                child: imagePath.startsWith('assets/')
+                    ? Image.asset(
+                        imagePath,
+                        width: 200,
+                        height: 150,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: 200,
+                            height: 150,
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.broken_image),
+                          );
+                        },
+                      )
+                    : Image.file(
+                        File(imagePath),
+                        width: 200,
+                        height: 150,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: 200,
+                            height: 150,
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.broken_image),
+                          );
+                        },
+                      ),
               ),
             ],
           ),
@@ -405,38 +737,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     );
   }
 
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
-    final messageDate = DateTime(date.year, date.month, date.day);
-
-    if (messageDate == today) {
-      return 'Today, ${_formatTime(date)}';
-    } else if (messageDate == yesterday) {
-      return 'Yesterday, ${_formatTime(date)}';
-    } else {
-      return '${date.day}/${date.month}/${date.year}, ${_formatTime(date)}';
-    }
-  }
-
-  String _formatTime(DateTime date) {
-    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-  }
-
   Widget _buildMessageInput() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, -1),
-          ),
-        ],
-      ),
       child: Row(
         children: [
           Expanded(
@@ -449,7 +752,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: Colors.grey[200],
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 20,
                   vertical: 10,
@@ -459,9 +761,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.image),
-                      onPressed: () {
-                        _showImagePickerDialog();
-                      },
+                      onPressed: _showImagePickerDialog,
                     ),
                   ],
                 ),
@@ -494,8 +794,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               title: const Text('Gallery'),
               onTap: () async {
                 Navigator.pop(context);
-                final imagePath =
-                    await ImagePickerService.pickImageFromGallery();
+                final imagePath = await _pickImageFromGallery();
                 if (imagePath != null) {
                   _addImageMessage(imagePath);
                 }
@@ -506,8 +805,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               title: const Text('Camera'),
               onTap: () async {
                 Navigator.pop(context);
-                final imagePath =
-                    await ImagePickerService.pickImageFromCamera();
+                final imagePath = await _pickImageFromCamera();
                 if (imagePath != null) {
                   _addImageMessage(imagePath);
                 }
@@ -520,17 +818,26 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   void _addImageMessage(String imagePath) {
-    final newMessage = ForumDataProvider.addMessage(
-      ForumDataProvider.currentUser.id,
+    // Prevent duplicate sends
+    if (_isSendingMessage) {
+      return;
+    }
+    
+    setState(() {
+      _isSendingMessage = true;
+    });
+    
+    final provider = Provider.of<ForumDataProvider>(context, listen: false);
+    
+    provider.addMessage(
+      provider.currentUser.id,
       widget.groupId,
       '',
       imageUrl: imagePath,
     );
 
-    setState(() {
-      _messages.add(newMessage);
-    });
-
+    // Don't update state here, let the provider notify us
+    
     // Scroll to bottom after adding image
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -540,6 +847,31 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           curve: Curves.easeOut,
         );
       }
+      
+      // Reset the sending flag
+      setState(() {
+        _isSendingMessage = false;
+      });
     });
   }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final messageDate = DateTime(date.year, date.month, date.day);
+
+    if (messageDate == today) {
+      return 'Today, ${_formatTime(date)}';
+    } else if (messageDate == yesterday) {
+      return 'Yesterday, ${_formatTime(date)}';
+    } else {
+      return '${date.day}/${date.month}/${date.year}, ${_formatTime(date)}';
+    }
+  }
+
+  String _formatTime(DateTime date) {
+    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  }
 }
+

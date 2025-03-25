@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inkora/models/user.dart';
 import 'package:inkora/providers/follow_provider.dart';
+import 'package:inkora/providers/forum_data_provider.dart';
 import 'package:inkora/screens/auth/login_page.dart';
 import 'package:inkora/theme/theme.dart';
 import 'package:inkora/screens/forum/forum_page.dart';
@@ -16,8 +17,8 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-            create: (_) => FollowProvider()), // Ajoute ton provider ici
+        ChangeNotifierProvider(create: (_) => FollowProvider()),
+        ChangeNotifierProvider(create: (_) => ForumDataProvider()), // Ajoute ton provider ici
       ],
       child: MyApp(),
     ),
