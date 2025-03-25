@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:inkora/screens/forum/chat_room_page.dart';
-import 'package:inkora/providers/data_provider.dart';
+import 'package:inkora/providers/forum_data_provider.dart';
 import 'package:inkora/models/group.dart';
-import 'package:inkora/utils/image_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 class ForumPage extends StatefulWidget {
@@ -10,6 +10,20 @@ class ForumPage extends StatefulWidget {
 
   @override
   _ForumPageState createState() => _ForumPageState();
+}
+
+class ImagePickerService {
+  static Future<String?> pickImageFromGallery() async {
+    final ImagePicker _picker = ImagePicker();
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    return image?.path;
+  }
+
+  static Future<String?> pickImageFromCamera() async {
+    final ImagePicker _picker = ImagePicker();
+    final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
+    return photo?.path;
+  }
 }
 
 class _ForumPageState extends State<ForumPage> {
@@ -28,11 +42,8 @@ class _ForumPageState extends State<ForumPage> {
   }
 
   void _loadGroups() {
-    // Get groups created by current user
-    ownedGroups = DataProvider.getCreatedGroups(DataProvider.currentUser.id);
-    
-    // Get groups where user is a member but not creator
-    memberGroups = DataProvider.getMemberGroups(DataProvider.currentUser.id);
+    ownedGroups = ForumDataProvider.getCreatedGroups(ForumDataProvider.currentUser.id); 
+    memberGroups = ForumDataProvider.getMemberGroups(ForumDataProvider.currentUser.id);
     
     // Initialize filtered lists
     filteredOwnedGroups = List.from(ownedGroups);
@@ -143,7 +154,8 @@ class _ForumPageState extends State<ForumPage> {
             label: const Text('Take Photo'),
             onPressed: () async {
               Navigator.pop(context);
-              final imagePath = await context.pickImageFromCamera();
+              final imagePath =
+                    await ImagePickerService.pickImageFromCamera();
               if (imagePath != null) {
                 setState(() {
                   _selectedGroupPhoto = imagePath;
@@ -158,7 +170,8 @@ class _ForumPageState extends State<ForumPage> {
             label: const Text('Choose from Gallery'),
             onPressed: () async {
               Navigator.pop(context);
-              final imagePath = await context.pickImageFromGallery();
+              final imagePath =
+                    await ImagePickerService.pickImageFromGallery();
               if (imagePath != null) {
                 setState(() {
                   _selectedGroupPhoto = imagePath;
@@ -181,19 +194,19 @@ class _ForumPageState extends State<ForumPage> {
 
   void _createNewRoom(String name, String description, String? photoPath) {
     // Create a new group
-    final newGroupId = DataProvider.groups.length + 1;
+    final newGroupId = ForumDataProvider.groups.length + 1;
     final newGroup = Group(
       id: newGroupId,
       name: name,
       description: description.isNotEmpty ? description : null,
-      creatorId: DataProvider.currentUser.id,
+      creatorId: ForumDataProvider.currentUser.id,
       creationDate: DateTime.now(),
-      members: [DataProvider.currentUser.id],
+      members: [ForumDataProvider.currentUser.id],
       photo: photoPath ?? 'assets/images/book_cover${(newGroupId % 3) + 1}.jpeg',
     );
 
     // Add to data provider
-    DataProvider.groups.add(newGroup);
+    ForumDataProvider.groups.add(newGroup);
 
     // Refresh the lists
     setState(() {
@@ -284,10 +297,10 @@ class _ForumPageState extends State<ForumPage> {
 
   void _updateGroup(int groupId, String name, String description, String? photoPath) {
     // Find the group in the list
-    final index = DataProvider.groups.indexWhere((g) => g.id == groupId);
+    final index = ForumDataProvider.groups.indexWhere((g) => g.id == groupId);
     if (index != -1) {
       // Get the existing group
-      final existingGroup = DataProvider.groups[index];
+      final existingGroup = ForumDataProvider.groups[index];
       
       // Create an updated group
       final updatedGroup = Group(
@@ -301,7 +314,7 @@ class _ForumPageState extends State<ForumPage> {
       );
       
       // Update the group in the data provider
-      DataProvider.updateGroup(updatedGroup);
+      ForumDataProvider.updateGroup(updatedGroup);
       
       // Refresh the lists
       setState(() {
@@ -332,7 +345,7 @@ class _ForumPageState extends State<ForumPage> {
                   filteredOwnedGroups.map((group) => _buildRoomItem(
                     context,
                     group.name,
-                    group.photo ?? DataProvider.getFallbackGroupImage(group.id),
+                    group.photo ?? ForumDataProvider.getFallbackGroupImage(group.id),
                     group.id,
                     isOwner: true,
                   )).toList(),
@@ -348,7 +361,7 @@ class _ForumPageState extends State<ForumPage> {
                   filteredMemberGroups.map((group) => _buildRoomItem(
                     context,
                     group.name,
-                    group.photo ?? DataProvider.getFallbackGroupImage(group.id),
+                    group.photo ?? ForumDataProvider.getFallbackGroupImage(group.id),
                     group.id,
                     isOwner: false,
                   )).toList(),
@@ -463,7 +476,7 @@ class _ForumPageState extends State<ForumPage> {
       },
       onLongPress: isOwner ? () {
         // Show edit options if user is the owner
-        _showRoomOptionsDialog(DataProvider.groups.firstWhere((g) => g.id == groupId));
+        _showRoomOptionsDialog(ForumDataProvider.groups.firstWhere((g) => g.id == groupId));
       } : null,
       child: Padding(
         padding: const EdgeInsets.only(right: 16),
@@ -573,7 +586,7 @@ class _ForumPageState extends State<ForumPage> {
 
   void _deleteGroup(int groupId) {
     // Remove the group from the list
-    DataProvider.groups.removeWhere((group) => group.id == groupId);
+    ForumDataProvider.groups.removeWhere((group) => group.id == groupId);
     
     // Refresh the lists
     setState(() {
@@ -610,8 +623,8 @@ class _ForumPageState extends State<ForumPage> {
 
   void _showJoinRoomsDialog() {
     // Get groups the user is not a member of
-    final availableGroups = DataProvider.groups.where((group) => 
-      !group.members!.contains(DataProvider.currentUser.id)
+    final availableGroups = ForumDataProvider.groups.where((group) => 
+      !group.members!.contains(ForumDataProvider.currentUser.id)
     ).toList();
 
     showDialog(
@@ -630,7 +643,7 @@ class _ForumPageState extends State<ForumPage> {
                     return ListTile(
                       leading: CircleAvatar(
                         backgroundImage: AssetImage(
-                          group.photo ?? DataProvider.getFallbackGroupImage(group.id)
+                          group.photo ?? ForumDataProvider.getFallbackGroupImage(group.id)
                         ),
                       ),
                       title: Text(group.name),
@@ -658,11 +671,11 @@ class _ForumPageState extends State<ForumPage> {
 
   void _joinRoom(Group group) {
     // Find the group in the original list
-    final index = DataProvider.groups.indexWhere((g) => g.id == group.id);
+    final index = ForumDataProvider.groups.indexWhere((g) => g.id == group.id);
     if (index != -1) {
       // Add the user to the members list
-      final updatedMembers = List<int>.from(DataProvider.groups[index].members ?? []);
-      updatedMembers.add(DataProvider.currentUser.id);
+      final updatedMembers = List<int>.from(ForumDataProvider.groups[index].members ?? []);
+      updatedMembers.add(ForumDataProvider.currentUser.id);
       
       // Create an updated group
       final updatedGroup = Group(
@@ -676,7 +689,7 @@ class _ForumPageState extends State<ForumPage> {
       );
       
       // Update the group in the list
-      DataProvider.updateGroup(updatedGroup);
+      ForumDataProvider.updateGroup(updatedGroup);
       
       // Refresh the lists
       setState(() {

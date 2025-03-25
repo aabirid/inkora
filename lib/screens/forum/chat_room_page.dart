@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:inkora/providers/data_provider.dart';
+import 'package:inkora/providers/forum_data_provider.dart';
 import 'package:inkora/models/group.dart';
 import 'package:inkora/models/message.dart';
-import 'package:inkora/utils/image_picker.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ChatRoomPage extends StatefulWidget {
   final int groupId;
-  
+
   const ChatRoomPage({
-    super.key, 
+    super.key,
     required this.groupId,
   });
 
@@ -16,28 +16,42 @@ class ChatRoomPage extends StatefulWidget {
   _ChatRoomPageState createState() => _ChatRoomPageState();
 }
 
+class ImagePickerService {
+  static Future<String?> pickImageFromGallery() async {
+    final ImagePicker _picker = ImagePicker();
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    return image?.path;
+  }
+
+  static Future<String?> pickImageFromCamera() async {
+    final ImagePicker _picker = ImagePicker();
+    final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
+    return photo?.path;
+  }
+}
+
 class _ChatRoomPageState extends State<ChatRoomPage> {
   final TextEditingController _messageController = TextEditingController();
   late Group _currentGroup;
   late List<Message> _messages;
   final ScrollController _scrollController = ScrollController();
-  
+
   @override
   void initState() {
     super.initState();
     _loadGroupData();
   }
-  
+
   void _loadGroupData() {
     // Find the current group
-    _currentGroup = DataProvider.groups.firstWhere(
+    _currentGroup = ForumDataProvider.groups.firstWhere(
       (group) => group.id == widget.groupId,
-      orElse: () => DataProvider.groups.first,
+      orElse: () => ForumDataProvider.groups.first,
     );
-    
+
     // Load messages for this group
-    _messages = DataProvider.getGroupMessages(widget.groupId);
-    
+    _messages = ForumDataProvider.getGroupMessages(widget.groupId);
+
     // Scroll to bottom after frame is rendered
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -52,18 +66,18 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   void _sendMessage() {
     if (_messageController.text.trim().isNotEmpty) {
-      final newMessage = DataProvider.addMessage(
-        DataProvider.currentUser.id,
+      final newMessage = ForumDataProvider.addMessage(
+        ForumDataProvider.currentUser.id,
         widget.groupId,
         _messageController.text.trim(),
       );
-      
+
       setState(() {
         _messages.add(newMessage);
       });
       _messageController.clear();
-      
-      // Scroll to bottom after adding message
+
+      // Scroll to bottom after adding the message
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
@@ -83,7 +97,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         title: Row(
           children: [
             CircleAvatar(
-              backgroundImage: AssetImage(_currentGroup.photo ?? DataProvider.getFallbackGroupImage(_currentGroup.id)),
+              backgroundImage: AssetImage(_currentGroup.photo ??
+                  ForumDataProvider.getFallbackGroupImage(_currentGroup.id)),
               radius: 16,
               onBackgroundImageError: (exception, stackTrace) {
                 // Fallback for image loading errors
@@ -112,7 +127,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             ),
           ],
         ),
-        actions: [          
+        actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
             onPressed: () {
@@ -149,45 +164,54 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               Center(
                 child: CircleAvatar(
                   radius: 40,
-                  backgroundImage: AssetImage(_currentGroup.photo ?? DataProvider.getFallbackGroupImage(_currentGroup.id)),
+                  backgroundImage: AssetImage(_currentGroup.photo ??
+                      ForumDataProvider.getFallbackGroupImage(
+                          _currentGroup.id)),
                   onBackgroundImageError: (exception, stackTrace) {
                     // Fallback for image loading errors
                   },
                 ),
               ),
               const SizedBox(height: 16),
-              Text('Description: ${_currentGroup.description ?? 'No description'}'),
+              Text(
+                  'Description: ${_currentGroup.description ?? 'No description'}'),
               const SizedBox(height: 8),
               Text('Created: ${_formatDate(_currentGroup.creationDate)}'),
               const SizedBox(height: 8),
               Text('Members: ${_currentGroup.members?.length ?? 0}'),
               const SizedBox(height: 16),
-              const Text('Members List:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text('Members List:',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               ..._currentGroup.members?.map((userId) {
-                final user = DataProvider.getUserById(userId);
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 12,
-                        backgroundImage: AssetImage(user.photo ?? DataProvider.getFallbackUserImage(user.id)),
-                        onBackgroundImageError: (exception, stackTrace) {
-                          // Fallback for image loading errors
-                        },
+                    final user = ForumDataProvider.getUserById(userId);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 12,
+                            backgroundImage: AssetImage(user.photo ??
+                                ForumDataProvider.getFallbackUserImage(
+                                    user.id)),
+                            onBackgroundImageError: (exception, stackTrace) {
+                              // Fallback for image loading errors
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          Text('${user.firstName} ${user.lastName}'),
+                          if (userId == _currentGroup.creatorId)
+                            const Padding(
+                              padding: EdgeInsets.only(left: 4),
+                              child: Text('(Creator)',
+                                  style:
+                                      TextStyle(fontStyle: FontStyle.italic)),
+                            ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Text('${user.firstName} ${user.lastName}'),
-                      if (userId == _currentGroup.creatorId)
-                        const Padding(
-                          padding: EdgeInsets.only(left: 4),
-                          child: Text('(Creator)', style: TextStyle(fontStyle: FontStyle.italic)),
-                        ),
-                    ],
-                  ),
-                );
-              }).toList() ?? [],
+                    );
+                  }).toList() ??
+                  [],
             ],
           ),
         ),
@@ -208,25 +232,30 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       itemCount: _messages.length + 1, // +1 for the timestamp
       itemBuilder: (context, index) {
         if (index == 0) {
-          return _buildTimestamp(_formatDate(_messages.isNotEmpty ? _messages.first.timestamp : DateTime.now()));
+          return _buildTimestamp(_formatDate(_messages.isNotEmpty
+              ? _messages.first.timestamp
+              : DateTime.now()));
         }
-        
+
         final message = _messages[index - 1];
-        final sender = DataProvider.getUserById(message.senderId);
-        final isCurrentUser = message.senderId == DataProvider.currentUser.id;
-        
+        final sender = ForumDataProvider.getUserById(message.senderId);
+        final isCurrentUser =
+            message.senderId == ForumDataProvider.currentUser.id;
+
         if (message.imageUrl != null && message.imageUrl!.isNotEmpty) {
           return _buildImageMessage(
             message.imageUrl!,
             isCurrentUser: isCurrentUser,
-            avatar: sender.photo ?? DataProvider.getFallbackUserImage(sender.id),
+            avatar: sender.photo ??
+                ForumDataProvider.getFallbackUserImage(sender.id),
             username: '${sender.firstName} ${sender.lastName}',
           );
         } else {
           return _buildMessage(
             message.content,
             isCurrentUser: isCurrentUser,
-            avatar: sender.photo ?? DataProvider.getFallbackUserImage(sender.id),
+            avatar: sender.photo ??
+                ForumDataProvider.getFallbackUserImage(sender.id),
             username: '${sender.firstName} ${sender.lastName}',
           );
         }
@@ -265,7 +294,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           if (!isCurrentUser) ...[
             CircleAvatar(
               radius: 16,
-              backgroundImage: AssetImage(avatar ?? 'assets/images/default_profile.jpg'),
+              backgroundImage:
+                  AssetImage(avatar ?? 'assets/images/default_profile.jpg'),
               onBackgroundImageError: (exception, stackTrace) {
                 // Fallback for image loading errors
               },
@@ -273,8 +303,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             const SizedBox(width: 8),
           ],
           Column(
-            crossAxisAlignment:
-                isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment: isCurrentUser
+                ? CrossAxisAlignment.end
+                : CrossAxisAlignment.start,
             children: [
               if (!isCurrentUser)
                 Padding(
@@ -326,7 +357,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           if (!isCurrentUser) ...[
             CircleAvatar(
               radius: 16,
-              backgroundImage: AssetImage(avatar ?? 'assets/images/default_profile.jpg'),
+              backgroundImage:
+                  AssetImage(avatar ?? 'assets/images/default_profile.jpg'),
               onBackgroundImageError: (exception, stackTrace) {
                 // Fallback for image loading errors
               },
@@ -334,8 +366,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             const SizedBox(width: 8),
           ],
           Column(
-            crossAxisAlignment:
-                isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment: isCurrentUser
+                ? CrossAxisAlignment.end
+                : CrossAxisAlignment.start,
             children: [
               if (!isCurrentUser)
                 Padding(
@@ -377,7 +410,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
     final messageDate = DateTime(date.year, date.month, date.day);
-    
+
     if (messageDate == today) {
       return 'Today, ${_formatTime(date)}';
     } else if (messageDate == yesterday) {
@@ -386,7 +419,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       return '${date.day}/${date.month}/${date.year}, ${_formatTime(date)}';
     }
   }
-  
+
   String _formatTime(DateTime date) {
     return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
@@ -423,26 +456,25 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 ),
                 suffixIcon: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: [                    
+                  children: [
                     IconButton(
                       icon: const Icon(Icons.image),
                       onPressed: () {
-                        // This would typically open an image picker
-                        // For now, we'll just simulate adding an image
                         _showImagePickerDialog();
                       },
                     ),
                   ],
                 ),
               ),
-              onSubmitted: (_) => _sendMessage(),
+              onSubmitted: (_) {
+                _sendMessage(); // Trigger the message send on Enter key press
+              },
             ),
           ),
           const SizedBox(width: 8),
-          FloatingActionButton(
-            onPressed: _sendMessage,
-            mini: true,
-            child: const Icon(Icons.send),
+          IconButton(
+            icon: const Icon(Icons.send),
+            onPressed: _sendMessage, // Trigger the message send on button click
           ),
         ],
       ),
@@ -462,7 +494,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               title: const Text('Gallery'),
               onTap: () async {
                 Navigator.pop(context);
-                final imagePath = await context.pickImageFromGallery();
+                final imagePath =
+                    await ImagePickerService.pickImageFromGallery();
                 if (imagePath != null) {
                   _addImageMessage(imagePath);
                 }
@@ -473,7 +506,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               title: const Text('Camera'),
               onTap: () async {
                 Navigator.pop(context);
-                final imagePath = await context.pickImageFromCamera();
+                final imagePath =
+                    await ImagePickerService.pickImageFromCamera();
                 if (imagePath != null) {
                   _addImageMessage(imagePath);
                 }
@@ -484,19 +518,19 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       ),
     );
   }
-  
+
   void _addImageMessage(String imagePath) {
-    final newMessage = DataProvider.addMessage(
-      DataProvider.currentUser.id,
+    final newMessage = ForumDataProvider.addMessage(
+      ForumDataProvider.currentUser.id,
       widget.groupId,
       '',
       imageUrl: imagePath,
     );
-    
+
     setState(() {
       _messages.add(newMessage);
     });
-    
+
     // Scroll to bottom after adding image
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -509,4 +543,3 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     });
   }
 }
-

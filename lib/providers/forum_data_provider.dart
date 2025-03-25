@@ -2,7 +2,7 @@ import 'package:inkora/models/group.dart';
 import 'package:inkora/models/user.dart';
 import 'package:inkora/models/message.dart';
 
-class DataProvider {
+class ForumDataProvider {
   // Current user
   static final User currentUser = User(
   id: 1,
