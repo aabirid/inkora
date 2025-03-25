@@ -48,7 +48,11 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Edit Profile")),
+      appBar: AppBar(title: const Text("Edit Profile"),
+      actions: [
+        TextButton(onPressed: _saveProfile,
+                child: const Text("Save"),)
+      ],),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -87,14 +91,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                 decoration: const InputDecoration(labelText: "Last Name"),
                 validator: (value) => value!.isEmpty ? "Enter your last name" : null,
                 onSaved: (value) => _editedUser = _editedUser.copyWith(lastName: value),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                initialValue: _editedUser.email,
-                decoration: const InputDecoration(labelText: "Email"),
-                validator: (value) => value!.isEmpty ? "Enter your email" : null,
-                onSaved: (value) => _editedUser = _editedUser.copyWith(email: value),
-              ),
+              ),              
               const SizedBox(height: 10),
               TextFormField(
                 initialValue: _editedUser.username, // Add username field
@@ -106,13 +103,8 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
               TextFormField(
                 initialValue: _editedUser.bio, // Add bio field
                 decoration: const InputDecoration(labelText: "Bio"),
-                maxLines: 3, // Allow multiline bio input
+                maxLines: 2, // Allow multiline bio input
                 onSaved: (value) => _editedUser = _editedUser.copyWith(bio: value),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _saveProfile,
-                child: const Text("Save"),
               ),
             ],
           ),

@@ -104,7 +104,8 @@ class _MyProfilePageState extends State<MyProfilePage> {
             radius: 40,
             backgroundImage: _user.photo != null
                 ? FileImage(
-                    File(_user.photo!)) // Use FileImage for local images
+                  File(_user.photo!)
+                ) // NetworkImage to load the image from a remote server. FileImage f file path returned by the database
                 : const AssetImage("assets/images/profile_default.jpeg"),
           ),
           const SizedBox(height: 16),
@@ -127,8 +128,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
                   fontSize: 16,
                 ),
               ),
-              Text(_user.username),
-              Text(_user.email),
+              Text(_user.username),              
               Text(_user.bio ?? ""),
             ],
           ),
