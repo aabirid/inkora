@@ -1,23 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:inkora/models/chapter.dart';
+import 'package:inkora/services/mock_data_service.dart';
 
 class EditChapterPage extends StatefulWidget {
-  final Map<String, String> chapter;
+  final int chapterId;
 
-  const EditChapterPage({super.key, required this.chapter});
+  const EditChapterPage({super.key, required this.chapterId});
 
   @override
-  _EditChapterPageState createState() => _EditChapterPageState();
+  State<EditChapterPage> createState() => _EditChapterPageState();
 }
 
 class _EditChapterPageState extends State<EditChapterPage> {
-  late TextEditingController _titleController;
-  late TextEditingController _contentController;
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _contentController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.chapter['title']);
-    _contentController = TextEditingController(text: widget.chapter['content']);
+    
+    // Schedule getting the data service after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final dataService = Provider.of<MockDataService>(context, listen: false);
+        
+        // Load chapter data
+        final chapter = dataService.chapters.firstWhere(
+          (c) => c.id == widget.chapterId,
+          orElse: () => Chapter(id: 0, bookId: 0, title: '', order: 0, content: ''),
+        );
+        
+        if (chapter.id != 0 && mounted) {
+          setState(() {
+            _titleController.text = chapter.title;
+            _contentController.text = chapter.content;
+          });
+        }
+      }
+    });
   }
 
   @override
@@ -27,69 +49,182 @@ class _EditChapterPageState extends State<EditChapterPage> {
     super.dispose();
   }
 
+  void _saveChapter() {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final dataService = Provider.of<MockDataService>(context, listen: false);
+    
+    try {
+      final chapter = dataService.chapters.firstWhere(
+        (c) => c.id == widget.chapterId,
+        orElse: () => Chapter(id: 0, bookId: 0, title: '', order: 0, content: ''),
+      );
+      
+      if (chapter.id != 0) {
+        dataService.updateChapter(Chapter(
+          id: chapter.id,
+          bookId: chapter.bookId,
+          title: _titleController.text,
+          order: chapter.order,
+          content: _contentController.text,
+        ));
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Chapter saved')),
+        );
+      }
+    } catch (e) {
+      print('Error saving chapter: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving chapter: $e')),
+      );
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+    
+    // Navigate back
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Edit Chapter'),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Consumer<MockDataService>(
+      builder: (context, dataService, child) {
+        final chapter = dataService.chapters.firstWhere(
+          (c) => c.id == widget.chapterId,
+          orElse: () => Chapter(id: 0, bookId: 0, title: '', order: 0, content: ''),
+        );
+        
+        if (chapter.id == 0) {
+          return const Scaffold(
+            body: Center(
+              child: Text('Chapter not found'),
+            ),
+          );
+        }
+        
+        final book = dataService.getBookById(chapter.bookId);
+        
+        return Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios, size: 20),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: Text(book?.title ?? 'Edit Chapter'),
+            actions: [
+              _isLoading
+                  ? Container(
+                      margin: const EdgeInsets.all(8.0),
+                      width: 30,
+                      height: 30,
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 2.0,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : TextButton(
+                      onPressed: _saveChapter,
+                      child: const Text('Save'),
+                    ),
+            ],
+          ),
+          body: Column(
             children: [
-              Text(
-                'Edit Chapter: ${widget.chapter['title']}',
-                style: theme.textTheme.titleLarge,
-              ),
-              const SizedBox(height: 16),
-
-              // Title Field
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Chapter Title',
-                  border: OutlineInputBorder(),
+              // Status bar
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: Colors.grey[200],
+                child: Row(
+                  children: [
+                    Text(
+                      'Chapter ${chapter.order}',
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // Content Field
-              TextFormField(
-                controller: _contentController,
-                maxLines: 10, // Allows for multiple lines of content
-                decoration: const InputDecoration(
-                  labelText: 'Chapter Content',
-                  border: OutlineInputBorder(),
+              
+              // Editor
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Chapter Title
+                        TextField(
+                          controller: _titleController,
+                          style: Theme.of(context).textTheme.titleLarge,
+                          decoration: InputDecoration(
+                            hintText: 'Chapter Title',
+                            hintStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.grey),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                        const Divider(),
+                        const SizedBox(height: 16),
+                
+                        // Chapter Content
+                        TextField(
+                          controller: _contentController,
+                          maxLines: null,
+                          minLines: 15,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5),
+                          decoration: InputDecoration(
+                            hintText: 'Start writing your chapter here...',
+                            hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                keyboardType: TextInputType.multiline,
               ),
-              const SizedBox(height: 24),
-
-              // Save Button
-              ElevatedButton(
-                onPressed: () {
-                  // Handle saving the chapter with updated title and content
-                  Map<String, String> updatedChapter = {
-                    'title': _titleController.text,
-                    'content': _contentController.text,
-                  };
-                  // You can send the updatedChapter to a database or wherever necessary
-                  Navigator.pop(context, updatedChapter);
-                },
-                child: const Text('Save Changes'),
+              
+              // Word count bar
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: Colors.grey[200],
+                child: Row(
+                  children: [
+                    Text(
+                      '${_wordCount(_contentController.text)} words',
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${_contentController.text.length} characters',
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
+
+  int _wordCount(String text) {
+    if (text.isEmpty) return 0;
+    return text.split(RegExp(r'\s+')).where((word) => word.isNotEmpty).length;
+  }
 }
+

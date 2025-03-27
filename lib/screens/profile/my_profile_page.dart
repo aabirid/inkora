@@ -4,7 +4,9 @@ import 'package:inkora/models/booklist.dart';
 import 'package:inkora/models/user.dart';
 import 'package:inkora/screens/book/book_overview.dart';
 import 'package:inkora/screens/book/booklist_overview.dart';
-import 'package:inkora/screens/profile/profile_edit_page.dart';
+import 'package:inkora/screens/edit/profile_edit_page.dart';
+import 'package:inkora/widgets/my_book_card.dart';
+import 'package:inkora/widgets/my_booklist_card.dart';
 import 'package:inkora/widgets/simple_book_card.dart';
 import 'package:inkora/widgets/simple_booklist_card.dart';
 import 'dart:io';
@@ -52,7 +54,48 @@ class _MyProfilePageState extends State<MyProfilePage> {
       title: "My Fantasy Collection",
       visibility: "public",
       creationDate: DateTime.now(),
-      books: [],
+      books: [
+        Book(
+          id: 1,
+          title: "The Alchemist",
+          author: "Paulo Coelho",
+          coverImage: "assets/images/book_cover7.jpeg",
+          description: "A journey to find one's destiny.",
+          rating: 4.5,
+          chapters: 15,
+          status: "Completed",
+        ),
+        Book(
+          id: 2,
+          title: "1984",
+          author: "George Orwell",
+          coverImage: "assets/images/book_cover6.jpeg",
+          description: "A dystopian future ruled by surveillance.",
+          rating: 4.8,
+          chapters: 24,
+          status: "Completed",
+        ),
+        Book(
+          id: 3,
+          title: "The Alchemist",
+          author: "Paulo Coelho",
+          coverImage: "assets/images/book_cover5.jpeg",
+          description: "A journey to find one's destiny.",
+          rating: 4.5,
+          chapters: 15,
+          status: "Completed",
+        ),
+        Book(
+          id: 4,
+          title: "1984",
+          author: "George Orwell",
+          coverImage: "assets/images/book_cover3.jpeg",
+          description: "A dystopian future ruled by surveillance.",
+          rating: 4.8,
+          chapters: 24,
+          status: "Completed",
+        ),
+      ],
       likesCount: 230,
       booksCount: 15,
     ),
@@ -60,9 +103,50 @@ class _MyProfilePageState extends State<MyProfilePage> {
       id: 2,
       userId: 1,
       title: "Top Mystery Picks",
-      visibility: "public",
+      visibility: "private",
       creationDate: DateTime.now(),
-      books: [],
+      books: [
+        Book(
+          id: 1,
+          title: "The Alchemist",
+          author: "Paulo Coelho",
+          coverImage: "assets/images/book_cover4.jpeg",
+          description: "A journey to find one's destiny.",
+          rating: 4.5,
+          chapters: 15,
+          status: "Completed",
+        ),
+        Book(
+          id: 2,
+          title: "1984",
+          author: "George Orwell",
+          coverImage: "assets/images/book_cover5.jpeg",
+          description: "A dystopian future ruled by surveillance.",
+          rating: 4.8,
+          chapters: 24,
+          status: "Completed",
+        ),
+        Book(
+          id: 3,
+          title: "The Alchemist",
+          author: "Paulo Coelho",
+          coverImage: "assets/images/book_cover2.jpeg",
+          description: "A journey to find one's destiny.",
+          rating: 4.5,
+          chapters: 15,
+          status: "Completed",
+        ),
+        Book(
+          id: 4,
+          title: "1984",
+          author: "George Orwell",
+          coverImage: "assets/images/book_cover8.jpeg",
+          description: "A dystopian future ruled by surveillance.",
+          rating: 4.8,
+          chapters: 24,
+          status: "Completed",
+        ),
+      ],
       likesCount: 340,
       booksCount: 10,
     ),
@@ -80,12 +164,9 @@ class _MyProfilePageState extends State<MyProfilePage> {
       body: Column(
         children: [
           _buildProfileSection(),
-          const Divider(height: 1),
           _buildTabBar(),
-          const Divider(height: 1),
-          const SizedBox(height: 10),
           Expanded(
-            child: _buildContentGrid(
+            child: _buildContentList(
               context,
               selectedTab == 0 ? myBooks : myBooklists,
             ),
@@ -103,12 +184,11 @@ class _MyProfilePageState extends State<MyProfilePage> {
           CircleAvatar(
             radius: 40,
             backgroundImage: _user.photo != null
-                ? FileImage(
-                  File(_user.photo!)
-                ) // NetworkImage to load the image from a remote server. FileImage f file path returned by the database
+                ? FileImage(File(_user
+                    .photo!)) // NetworkImage to load the image from a remote server. FileImage f file path returned by the database
                 : const AssetImage("assets/images/profile_default.jpeg"),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -117,7 +197,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
               _buildStatColumn('62', 'Following'),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -128,11 +208,11 @@ class _MyProfilePageState extends State<MyProfilePage> {
                   fontSize: 16,
                 ),
               ),
-              Text(_user.username),              
+              Text(_user.username),
               Text(_user.bio ?? ""),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           OutlinedButton(
             onPressed: () async {
               final updatedUser = await Navigator.push<User>(
@@ -159,18 +239,31 @@ class _MyProfilePageState extends State<MyProfilePage> {
   }
 
   Widget _buildTabBar() {
-    return Row(
-      children: [
-        _buildTabIcon(Icons.article_outlined, 0),
-        _buildTabIcon(Icons.bookmark_border, 1),
-      ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor, // Background color
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1), // Soft shadow
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 2), // Shadow positioned below
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          _buildTabIcon(Icons.article_outlined, 0),
+          _buildTabIcon(Icons.bookmark_border, 1),
+        ],
+      ),
     );
   }
 
   Widget _buildTabIcon(IconData icon, int index) {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        padding: const EdgeInsets.symmetric(vertical: 3.0),
         child: IconButton(
           icon: Icon(
             icon,
@@ -203,39 +296,23 @@ class _MyProfilePageState extends State<MyProfilePage> {
     );
   }
 
-  Widget _buildContentGrid(BuildContext context, List<dynamic> items) {
+  Widget _buildContentList(BuildContext context, List<dynamic> items) {
     if (items.isEmpty) {
       return const Center(child: Text("No items available"));
     }
 
-    return GridView.builder(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 3,
-        childAspectRatio: 0.6,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 15,
-      ),
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 10),
       itemCount: items.length,
-      itemBuilder: (context, index) => items[index] is Book
-          ? SimpleBookCard(
-              book: items[index],
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => BookOverview(book: items[index]),
-                ),
-              ),
-            )
-          : SimpleBooklistCard(
-              booklist: items[index],
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      BooklistOverview(booklist: items[index]),
-                ),
-              ),
-            ),
+      itemBuilder: (context, index) {
+        if (items[index] is Book) {
+          return MyBookCard(book: items[index]);
+        } else {
+          return MyBooklistCard(
+            booklist: items[index],
+          );
+        }
+      },
     );
   }
 }
