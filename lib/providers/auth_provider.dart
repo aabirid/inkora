@@ -1,174 +1,154 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import '../models/user.dart';
+import 'package:http/http.dart' as http;
+import 'package:inkora/models/user.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-enum AuthStatus {
-  unauthenticated,
-  authenticating,
-  authenticated,
-  error,
-}
-
-class AuthProvider extends ChangeNotifier {
-  AuthStatus _status = AuthStatus.unauthenticated;
-  User? _currentUser;
+class AuthProvider with ChangeNotifier {
+  User? _user;
   String _errorMessage = '';
+  bool _isLoading = false;
 
-  // Sample users for authentication
-  final List<User> _users = [
-    User(
-      id: 1,
-      email: 'idboulaidaabir@gmail.com',
-      username: 'mabirro',
-      password: 'ababirro',
-      gender: 'Female',
-      birthDate: DateTime(2005, 12, 05),
-      registrationDate: DateTime(2023, 1, 10),
-      status: 'active',
-      photo: 'assets/images/nonfiction.jpeg',
-      bio: 'A passionate reader and writer.',
-    ),
-    User(
-      id: 2,
-      email: 'emily@example.com',
-      username: 'emilyjohnson',
-      password: 'password123',
-      gender: 'Female',
-      birthDate: DateTime(1992, 8, 20),
-      registrationDate: DateTime(2023, 2, 15),
-      status: 'active',
-      photo: 'assets/images/poetry.jpeg',
-      bio: 'Loves to read poetry and fiction.',
-    ),
-    User(
-      id: 3,
-      email: 'michael@example.com',
-      username: 'michaelwilliams',
-      password: 'password123',
-      gender: 'Male',
-      birthDate: DateTime(1988, 3, 10),
-      registrationDate: DateTime(2023, 3, 5),
-      status: 'active',
-      photo: 'assets/images/adventure.jpeg',
-      bio: 'Adventure book enthusiast.',
-    ),
-  ];
-
-  AuthStatus get status => _status;
-  User? get currentUser => _currentUser;
+  User? get user => _user;
   String get errorMessage => _errorMessage;
-  bool get isAuthenticated => _status == AuthStatus.authenticated;
+  bool get isLoading => _isLoading;
+  bool get isAuthenticated => _user != null;
 
-  // Login with email/username and password
-  Future<bool> login(String emailOrUsername, String password) async {
-    _status = AuthStatus.authenticating;
+  // Base URL for your PHP API - update this to your actual server URL
+  final String _baseUrl = 'http://192.168.1.105/inkora_api';
+
+  // Login method
+  Future<bool> login(String identifier, String password) async {
+    _isLoading = true;
     _errorMessage = '';
     notifyListeners();
 
     try {
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 800));
-      
-      // Find user by email or username
-      User? user;
-      for (var u in _users) {
-        if (u.email == emailOrUsername || u.username == emailOrUsername) {
-          user = u;
-          break;
-        }
-      }
-      
-      if (user == null) {
-        throw Exception('User not found');
-      }
-      
-      // Check password
-      if (user.password != password) {
-        throw Exception('Invalid password');
-      }
+      final response = await http.post(
+        Uri.parse('$_baseUrl/login.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'identifier': identifier, // Peut être un email ou un username
+          'password': password,
+        }),
+      );
 
-      _currentUser = user;
-      _status = AuthStatus.authenticated;
-      notifyListeners();
-      return true;
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200 && data['token'] != null) {
+        // Créer l'utilisateur
+        _user = User(
+          id: data['id_utilisateur'],
+          email: data['email'],
+          password: '',
+          gender: data['genre'] ?? '',
+          registrationDate: DateTime.parse(data['date_inscription']),
+          status: data['statut'],
+          username: data['username'],
+        );
+
+        // Sauvegarder le token et le username
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', data['token']);
+        await prefs.setString('username', data['username']);
+
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = data['error'] ?? 'Login failed. Please try again.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
     } catch (e) {
-      _status = AuthStatus.error;
-      _errorMessage = e.toString().contains('Exception:') 
-          ? e.toString().split('Exception: ')[1] 
-          : 'An error occurred';
+      _errorMessage = 'Network error. Please check your connection.';
+      _isLoading = false;
       notifyListeners();
       return false;
     }
   }
 
-  // Register a new user
+  // Register method
   Future<bool> register({
-    required String firstName,
-    required String lastName,
+    required String username,
     required String email,
     required String password,
     required String gender,
     DateTime? birthDate,
     String? country,
   }) async {
-    _status = AuthStatus.authenticating;
+    _isLoading = true;
     _errorMessage = '';
     notifyListeners();
 
     try {
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 1000));
-      
-      // Check if user already exists
-      bool existingUser = false;
-      for (var u in _users) {
-        if (u.email == email || u.username == '${firstName.toLowerCase()}${lastName.toLowerCase()}') {
-          existingUser = true;
-          break;
-        }
-      }
-      
-      if (existingUser) {
-        throw Exception('User with this email or username already exists');
-      }
-
-      // Create a new user
-      final newId = _users.isEmpty ? 1 : _users.map((u) => u.id).reduce((a, b) => a > b ? a : b) + 1;
-      final username = (firstName.toLowerCase() + lastName.toLowerCase()).replaceAll(' ', '');
-      
-      final newUser = User(
-        id: newId,
-        email: email,
-        username: username,
-        password: password,
-        gender: gender,
-        birthDate: birthDate,
-        address: country,
-        registrationDate: DateTime.now(),
-        status: 'active',
-        photo: 'assets/images/default_profile.jpeg',
-        bio: 'New Inkora user',
+      final response = await http.post(
+        Uri.parse('$_baseUrl/register.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'username': username,
+          'email': email,
+          'password': password,
+          'genre':
+              gender, // Note: your backend uses 'genre' instead of 'gender'
+          'date_naissance': birthDate?.toIso8601String(),
+          'adresse': country, // Using 'adresse' field for country
+        }),
       );
-      
-      _users.add(newUser);
-      _currentUser = newUser;
-      _status = AuthStatus.authenticated;
-      notifyListeners();
-      return true;
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200 && data['message'] != null) {
+        // Registration successful, now login
+        return await login(email, password);
+      } else {
+        _errorMessage =
+            data['error'] ?? 'Registration failed. Please try again.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
     } catch (e) {
-      _status = AuthStatus.error;
-      _errorMessage = e.toString().contains('Exception:') 
-          ? e.toString().split('Exception: ')[1] 
-          : 'An error occurred';
+      _errorMessage = 'Network error. Please check your connection.';
+      _isLoading = false;
       notifyListeners();
       return false;
     }
   }
 
-  // Logout the current user
-  void logout() {
-    _currentUser = null;
-    _status = AuthStatus.unauthenticated;
+  // Check if user is already logged in
+  Future<bool> autoLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    final username = prefs.getString('username');
+
+    if (token == null || username == null) {
+      return false;
+    }
+
+    // Create a basic user object from stored data
+    // In a real app, you would make an API call to get full user details
+    _user = User(
+      id: 0, // We don't have the ID stored
+      email: '', // We don't have the email stored
+      password: '', // Don't store password
+      gender: '', // We don't have this stored
+      registrationDate: DateTime.now(),
+      status: 'actif',
+      username: username,
+    );
+
+    notifyListeners();
+    return true;
+  }
+
+  // Logout method
+  Future<void> logout() async {
+    _user = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+    await prefs.remove('username');
     notifyListeners();
   }
 }
-

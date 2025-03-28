@@ -19,8 +19,8 @@ void main() {
         ChangeNotifierProxyProvider<AuthProvider, ForumDataProvider>(
           create: (_) => ForumDataProvider(),
           update: (_, authProvider, forumProvider) {
-            if (authProvider.isAuthenticated && authProvider.currentUser != null) {
-              forumProvider!.currentUser = authProvider.currentUser!;
+            if (authProvider.isAuthenticated && authProvider.user != null) {
+              forumProvider!.currentUser = authProvider.user!;
             }
             return forumProvider!;
           },

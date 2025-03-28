@@ -25,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     // Get the current user from the auth provider
     final authProvider = Provider.of<AuthProvider>(context);
-    final currentUser = authProvider.currentUser!;
+    final currentUser = authProvider.user!;
 
     return Scaffold(
       appBar: AppBar(

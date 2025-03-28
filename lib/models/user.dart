@@ -27,33 +27,32 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'] ?? 0,
+      id: json['id_utilisateur'] ?? 0,
       email: json['email'] ?? '',
-      password: json['password'] ?? '',
-      birthDate: json['birthDate'] != null ? DateTime.parse(json['birthDate']) : null,
-      gender: json['gender'] ?? 'prefer not to say',
-      address: json['address'],
-      registrationDate: DateTime.parse(json['registrationDate'] ?? DateTime.now().toString()),
-      status: json['status'] ?? 'active',
+      password: '', // Don't store password
+      birthDate: json['date_naissance'] != null ? DateTime.parse(json['date_naissance']) : null,
+      gender: json['genre'] ?? 'prefer not to say',
+      address: json['adresse'],
+      registrationDate: DateTime.parse(json['date_inscription'] ?? DateTime.now().toString()),
+      status: json['statut'] ?? 'actif',
       photo: json['photo'],
       username: json['username'] ?? '',
-      bio: json['bio'],
+      bio: null, // Your schema doesn't have a bio field
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      'id_utilisateur': id,
       'email': email,
-      'password': password,
-      'birthDate': birthDate?.toIso8601String(),
-      'gender': gender,
-      'address': address,
-      'registrationDate': registrationDate.toIso8601String(),
-      'status': status,
+      'mot_de_passe': password,
+      'date_naissance': birthDate?.toIso8601String(),
+      'genre': gender,
+      'adresse': address,
+      'date_inscription': registrationDate.toIso8601String(),
+      'statut': status,
       'photo': photo,
       'username': username,
-      'bio': bio,
     };
   }
 

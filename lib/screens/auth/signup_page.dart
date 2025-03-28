@@ -11,14 +11,12 @@ class SignupPage extends StatefulWidget {
 
 class _SignupPageState extends State<SignupPage> {
   final _formKey = GlobalKey<FormState>();
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
 
   @override
   void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
     super.dispose();
   }
@@ -29,8 +27,7 @@ class _SignupPageState extends State<SignupPage> {
         context,
         MaterialPageRoute(
           builder: (context) => SignupPage2(
-            firstName: _firstNameController.text.trim(),
-            lastName: _lastNameController.text.trim(),
+            username: _usernameController.text.trim(),
             email: _emailController.text.trim(),
           ),
         ),
@@ -68,28 +65,14 @@ class _SignupPageState extends State<SignupPage> {
               const Text('Enter your personal details to continue', style: TextStyle(color: Colors.grey)),
               const SizedBox(height: 24),
               TextFormField(
-                controller: _firstNameController,
+                controller: _usernameController,
                 decoration: InputDecoration(
-                  hintText: 'First Name',
+                  hintText: 'Username',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your first name';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _lastNameController,
-                decoration: InputDecoration(
-                  hintText: 'Last Name',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your last name';
+                    return 'Please enter your username';
                   }
                   return null;
                 },
