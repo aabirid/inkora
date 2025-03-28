@@ -2,13 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:inkora/models/book.dart';
 import 'package:inkora/models/booklist.dart';
 import 'package:inkora/models/user.dart';
-import 'package:inkora/screens/book/book_overview.dart';
-import 'package:inkora/screens/book/booklist_overview.dart';
 import 'package:inkora/screens/edit/profile_edit_page.dart';
 import 'package:inkora/widgets/my_book_card.dart';
 import 'package:inkora/widgets/my_booklist_card.dart';
-import 'package:inkora/widgets/simple_book_card.dart';
-import 'package:inkora/widgets/simple_booklist_card.dart';
 import 'dart:io';
 
 class MyProfilePage extends StatefulWidget {
@@ -200,14 +196,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
           const SizedBox(height: 10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                '${_user.firstName} ${_user.lastName}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
+            children: [              
               Text(_user.username),
               Text(_user.bio ?? ""),
             ],

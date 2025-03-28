@@ -63,7 +63,6 @@ class LibraryPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 12),
           _buildSectionTitle("Saved Books"),
           _buildBookGrid(myBooks),
           const SizedBox(height: 20),

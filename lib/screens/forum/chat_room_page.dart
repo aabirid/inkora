@@ -511,14 +511,14 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             message.imageUrl!,
             isCurrentUser: isCurrentUser,
             avatar: sender.photo ?? provider.getFallbackUserImage(sender.id),
-            username: '${sender.firstName} ${sender.lastName}',
+            username: sender.username,
           );
         } else {
           return _buildMessage(
             message.content,
             isCurrentUser: isCurrentUser,
             avatar: sender.photo ?? provider.getFallbackUserImage(sender.id),
-            username: '${sender.firstName} ${sender.lastName}',
+            username: sender.username,
           );
         }
       },

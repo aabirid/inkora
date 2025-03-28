@@ -7,7 +7,9 @@ class Comment {
   final int bookId;
   final String content;
   final DateTime commentDate;
-  final List<CommentReply>? replies;
+  final List<CommentReply> replies;
+  final int likesCount;
+  final bool isLikedByCurrentUser;
 
   Comment({
     required this.id,
@@ -16,8 +18,35 @@ class Comment {
     required this.bookId,
     required this.content,
     required this.commentDate,
-    this.replies,
-  });
+    List<CommentReply>? replies,
+    this.likesCount = 0,
+    this.isLikedByCurrentUser = false, // Default to false to avoid null
+  }) : this.replies = replies ?? [];
+
+  // Create a copy of this comment with updated properties
+  Comment copyWith({
+    int? id,
+    int? userId,
+    String? userName,
+    int? bookId,
+    String? content,
+    DateTime? commentDate,
+    List<CommentReply>? replies,
+    int? likesCount,
+    bool? isLikedByCurrentUser,
+  }) {
+    return Comment(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      userName: userName ?? this.userName,
+      bookId: bookId ?? this.bookId,
+      content: content ?? this.content,
+      commentDate: commentDate ?? this.commentDate,
+      replies: replies ?? this.replies,
+      likesCount: likesCount ?? this.likesCount,
+      isLikedByCurrentUser: isLikedByCurrentUser ?? this.isLikedByCurrentUser,
+    );
+  }
 
   // Factory constructor to convert JSON to Comment object
   factory Comment.fromJson(Map<String, dynamic> json) {
@@ -32,7 +61,9 @@ class Comment {
           : DateTime.now(),
       replies: json['replies'] != null 
           ? (json['replies'] as List).map((rep) => CommentReply.fromJson(rep)).toList() 
-          : null,
+          : [],
+      likesCount: json['likesCount'] ?? 0,
+      isLikedByCurrentUser: json['isLikedByCurrentUser'] ?? false, // Default to false
     );
   }
 
@@ -45,7 +76,9 @@ class Comment {
       'bookId': bookId,
       'content': content,
       'commentDate': commentDate.toIso8601String(),
-      'replies': replies?.map((rep) => rep.toJson()).toList(),
+      'replies': replies.map((rep) => rep.toJson()).toList(),
+      'likesCount': likesCount,
+      'isLikedByCurrentUser': isLikedByCurrentUser,
     };
   }
 
@@ -56,6 +89,7 @@ class Comment {
     'bookId': 'id_livre',
     'content': 'contenu',
     'commentDate': 'date_commentaire',
+    'likesCount': 'nombre_likes',
   };
 }
 

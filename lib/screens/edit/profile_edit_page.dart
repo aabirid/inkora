@@ -69,7 +69,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                           ? FileImage(File(_editedUser.photo!)) // Display existing image if available
                           : const AssetImage("assets/images/profile_default.jpeg")) as ImageProvider,
                   child: const Align(
-                    alignment: Alignment.bottomRight,
+                    alignment: Alignment.center,
                     child: CircleAvatar(
                       radius: 15,
                       backgroundColor: Colors.white,
@@ -79,20 +79,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                 ),
               ),
               const SizedBox(height: 20),
-              TextFormField(
-                initialValue: _editedUser.firstName,
-                decoration: const InputDecoration(labelText: "First Name"),
-                validator: (value) => value!.isEmpty ? "Enter your first name" : null,
-                onSaved: (value) => _editedUser = _editedUser.copyWith(firstName: value),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                initialValue: _editedUser.lastName,
-                decoration: const InputDecoration(labelText: "Last Name"),
-                validator: (value) => value!.isEmpty ? "Enter your last name" : null,
-                onSaved: (value) => _editedUser = _editedUser.copyWith(lastName: value),
-              ),              
-              const SizedBox(height: 10),
               TextFormField(
                 initialValue: _editedUser.username, // Add username field
                 decoration: const InputDecoration(labelText: "Username"),

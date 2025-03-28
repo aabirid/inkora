@@ -1,7 +1,5 @@
 class User {
   final int id;
-  final String lastName;
-  final String firstName;
   final String email;
   final String password;
   final DateTime? birthDate;
@@ -15,8 +13,6 @@ class User {
 
   User({
     required this.id,
-    required this.lastName,
-    required this.firstName,
     required this.email,
     required this.password,
     this.birthDate,
@@ -32,8 +28,6 @@ class User {
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'] ?? 0,
-      lastName: json['lastName'] ?? '',
-      firstName: json['firstName'] ?? '',
       email: json['email'] ?? '',
       password: json['password'] ?? '',
       birthDate: json['birthDate'] != null ? DateTime.parse(json['birthDate']) : null,
@@ -50,8 +44,6 @@ class User {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'lastName': lastName,
-      'firstName': firstName,
       'email': email,
       'password': password,
       'birthDate': birthDate?.toIso8601String(),
@@ -67,8 +59,6 @@ class User {
 
   User copyWith({
     int? id,
-    String? lastName,
-    String? firstName,
     String? email,
     String? password,
     DateTime? birthDate,
@@ -82,8 +72,6 @@ class User {
   }) {
     return User(
       id: id ?? this.id,
-      lastName: lastName ?? this.lastName,
-      firstName: firstName ?? this.firstName,
       email: email ?? this.email,
       password: password ?? this.password,
       birthDate: birthDate ?? this.birthDate,

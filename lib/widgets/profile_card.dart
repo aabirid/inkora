@@ -30,14 +30,14 @@ class ProfileCard extends StatelessWidget {
               ? AssetImage(user.photo!)
               : const AssetImage('assets/images/profile_default.jpeg'),
         ),
-        title: Text("${user.firstName} ${user.lastName}"),
-        subtitle: Text("@${user.username}"),
+        title: Text(user.username),
+        subtitle: Text('idk put sth here'),
         trailing: ElevatedButton(
           onPressed: () {
             followProvider.toggleFollow(user.id);
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: isFollowing ? Colors.grey : Colors.green.shade400,
+            backgroundColor: isFollowing ? Colors.grey : Theme.of(context).primaryColor,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),

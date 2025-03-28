@@ -17,8 +17,6 @@ class AuthProvider extends ChangeNotifier {
   final List<User> _users = [
     User(
       id: 1,
-      firstName: 'Aabir',
-      lastName: 'Id Boulaid',
       email: 'idboulaidaabir@gmail.com',
       username: 'mabirro',
       password: 'ababirro',
@@ -31,8 +29,6 @@ class AuthProvider extends ChangeNotifier {
     ),
     User(
       id: 2,
-      firstName: 'Emily',
-      lastName: 'Johnson',
       email: 'emily@example.com',
       username: 'emilyjohnson',
       password: 'password123',
@@ -45,8 +41,6 @@ class AuthProvider extends ChangeNotifier {
     ),
     User(
       id: 3,
-      firstName: 'Michael',
-      lastName: 'Williams',
       email: 'michael@example.com',
       username: 'michaelwilliams',
       password: 'password123',
@@ -143,8 +137,6 @@ class AuthProvider extends ChangeNotifier {
       
       final newUser = User(
         id: newId,
-        firstName: firstName,
-        lastName: lastName,
         email: email,
         username: username,
         password: password,

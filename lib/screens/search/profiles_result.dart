@@ -10,8 +10,6 @@ class ProfilesResult extends StatelessWidget {
   final List<User> profiles = [
     User(
       id: 1,
-      lastName: "Jackson",
-      firstName: "Max",
       email: "max@example.com",
       password: "hidden",
       gender: "Male",
@@ -23,8 +21,6 @@ class ProfilesResult extends StatelessWidget {
     ),
     User(
       id: 2,
-      lastName: "Potter",
-      firstName: "Mia",
       email: "mia@example.com",
       password: "hidden",
       gender: "Female",
@@ -39,9 +35,7 @@ class ProfilesResult extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     List<User> filteredProfiles = profiles.where((user) {
-      return user.firstName.toLowerCase().contains(query.toLowerCase()) ||
-             user.lastName.toLowerCase().contains(query.toLowerCase()) ||
-             user.username.toLowerCase().contains(query.toLowerCase());
+      return user.username.toLowerCase().contains(query.toLowerCase());
     }).toList();
 
     return filteredProfiles.isEmpty

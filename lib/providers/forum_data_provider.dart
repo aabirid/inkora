@@ -24,8 +24,6 @@ class ForumDataProvider extends ChangeNotifier {
     // Initialize with a default user (will be overridden by AuthProvider)
     _currentUser = User(
       id: 1,
-      lastName: 'Smith',
-      firstName: 'John',
       email: 'john@example.com',
       password: 'password123',
       gender: 'male',
@@ -61,8 +59,6 @@ class ForumDataProvider extends ChangeNotifier {
     _users.addAll([
       User(
         id: 2,
-        lastName: 'Johnson',
-        firstName: 'Emily',
         email: 'emily@example.com',
         password: 'password123',
         gender: 'female',
@@ -74,8 +70,6 @@ class ForumDataProvider extends ChangeNotifier {
       ),
       User(
         id: 3,
-        lastName: 'Williams',
-        firstName: 'Michael',
         email: 'michael@example.com',
         password: 'password123',
         gender: 'male',
@@ -87,8 +81,6 @@ class ForumDataProvider extends ChangeNotifier {
       ),
       User(
         id: 4,
-        lastName: 'Brown',
-        firstName: 'Sophia',
         email: 'sophia@example.com',
         password: 'password123',
         gender: 'female',
@@ -100,8 +92,6 @@ class ForumDataProvider extends ChangeNotifier {
       ),
       User(
         id: 5,
-        lastName: 'Davis',
-        firstName: 'James',
         email: 'james@example.com',
         password: 'password123',
         gender: 'male',
@@ -241,8 +231,6 @@ class ForumDataProvider extends ChangeNotifier {
       (user) => user.id == userId,
       orElse: () => User(
         id: 0,
-        lastName: 'Unknown',
-        firstName: 'User',
         email: 'unknown@example.com',
         password: '',
         gender: 'unknown',

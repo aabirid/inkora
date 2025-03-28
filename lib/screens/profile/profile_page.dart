@@ -81,7 +81,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${currentUser.firstName} ${currentUser.lastName}'),
+        title: Text(currentUser.username),
       ),
       body: Column(
         children: [
