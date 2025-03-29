@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inkora/screens/search/search_results.dart';
+import 'package:inkora/services/api_service.dart';
+import 'package:inkora/models/category.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -10,20 +12,38 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
+  final ApiService _apiService = ApiService();
+  bool _isLoading = true;
+  List<Category> _categories = [];
 
-  final List<Map<String, String>> genres = [
-    {"name": "Fantasy", "image": "assets/images/fantasy.jpeg"},
-    {"name": "Horror", "image": "assets/images/horror.jpeg"},
-    {"name": "Romance", "image": "assets/images/romance.jpeg"},
-    {"name": "Non-Fiction", "image": "assets/images/nonfiction.jpeg"},
-    {"name": "Adventure", "image": "assets/images/adventure.jpeg"},
-    {"name": "Mystery", "image": "assets/images/mystery.jpeg"},
-    {"name": "Thriller", "image": "assets/images/thriller.jpeg"},
-    {"name": "Historical", "image": "assets/images/historical.jpeg"},
-    {"name": "Poetry", "image": "assets/images/poetry.jpeg"},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchCategories();
+  }
 
-  void _performSearch() {
+  Future<void> _fetchCategories() async {
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      final categories = await _apiService.getCategories();
+      setState(() {
+        _categories = categories;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load categories: $e')),
+      );
+    }
+  }
+
+  void _performSearch() async {
     String query = _searchController.text.trim();
     if (query.isNotEmpty) {
       Navigator.push(
@@ -34,10 +54,10 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
-  void _searchByGenre(String genre) {
+  void _searchByCategory(String category) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => SearchResultsPage(query: genre)),
+      MaterialPageRoute(builder: (context) => SearchResultsPage(query: category)),
     );
   }
 
@@ -64,34 +84,44 @@ class _SearchPageState extends State<SearchPage> {
           ],
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: GridView.builder(
-          itemCount: genres.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-          ),
-          itemBuilder: (context, index) {
-            return GestureDetector(
-              onTap: () {
-                _searchByGenre(genres[index]["name"]!);
-              },
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundImage: AssetImage(genres[index]["image"]!),
-                  ),
-                  SizedBox(height: 5),
-                  Text(genres[index]["name"]!, style: TextStyle(fontSize: 14)),
-                ],
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: GridView.builder(
+                itemCount: _categories.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                ),
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      _searchByCategory(_categories[index].name);
+                    },
+                    child: Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 30,
+                          backgroundColor: Colors.grey[200],
+                          child: Text(
+                            _categories[index].name.substring(0, 1).toUpperCase(),
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        Text(_categories[index].name, 
+                          style: TextStyle(fontSize: 14),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
-            );
-          },
-        ),
-      ),
+            ),
     );
   }
 }
+

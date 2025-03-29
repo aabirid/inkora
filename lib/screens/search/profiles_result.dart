@@ -1,50 +1,59 @@
 import 'package:flutter/material.dart';
-import 'package:inkora/widgets/profile_card.dart';
 import 'package:inkora/models/user.dart';
+import 'package:inkora/services/api_service.dart';
+import 'package:inkora/widgets/profile_card.dart';
 
-class ProfilesResult extends StatelessWidget {
+class ProfilesResult extends StatefulWidget {
   final String query;
 
-  ProfilesResult({super.key, required this.query});
+  const ProfilesResult({super.key, required this.query});
 
-  final List<User> profiles = [
-    User(
-      id: 1,
-      email: "max@example.com",
-      password: "hidden",
-      gender: "Male",
-      registrationDate: DateTime.now(),
-      status: "active",
-      photo: 'assets/images/book_cover3.jpeg',
-      username: 'maxjackson',  // New field
-      bio: 'Software Developer from California',  // New field
-    ),
-    User(
-      id: 2,
-      email: "mia@example.com",
-      password: "hidden",
-      gender: "Female",
-      registrationDate: DateTime.now(),
-      status: "active",
-      photo: 'assets/images/book_cover2.jpeg',
-      username: 'miapotter',  // New field
-      bio: 'Lover of books and travel',  // New field
-    ),
-  ];
+  @override
+  _ProfilesResultState createState() => _ProfilesResultState();
+}
+
+class _ProfilesResultState extends State<ProfilesResult> {
+  late Future<List<User>> _profilesFuture;
+  final ApiService _apiService = ApiService();
+
+  @override
+  void initState() {
+    super.initState();
+    _profilesFuture = _apiService.searchProfiles(widget.query);
+  }
+
+  @override
+  void didUpdateWidget(ProfilesResult oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.query != widget.query) {
+      setState(() {
+        _profilesFuture = _apiService.searchProfiles(widget.query);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    List<User> filteredProfiles = profiles.where((user) {
-      return user.username.toLowerCase().contains(query.toLowerCase());
-    }).toList();
-
-    return filteredProfiles.isEmpty
-        ? Center(child: Text("No Profiles found for '$query'"))
-        : ListView.builder(
-            itemCount: filteredProfiles.length,
+    return FutureBuilder<List<User>>(
+      future: _profilesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text("Error: ${snapshot.error}"));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Center(child: Text("No profiles found for '${widget.query}'"));
+        } else {
+          final profiles = snapshot.data!;
+          return ListView.builder(
+            itemCount: profiles.length,
             itemBuilder: (context, index) {
-              return ProfileCard(user: filteredProfiles[index]);
+              return ProfileCard(user: profiles[index]);
             },
           );
+        }
+      },
+    );
   }
 }
+

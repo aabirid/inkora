@@ -4,7 +4,7 @@ class Group {
   final String? description;
   final int creatorId;
   final DateTime creationDate;
-  final List<int>? members; // List of user IDs
+  final List<int> members; // List of user IDs
   final String? photo;
 
   Group({
@@ -13,9 +13,9 @@ class Group {
     this.description,
     required this.creatorId,
     required this.creationDate,
-    this.members,
+    List<int>? members, // Use an empty list if no members are provided
     this.photo,
-  });
+  }) : members = members ?? [];
 
   // Create a copy of this group with updated fields
   Group copyWith({
@@ -37,5 +37,30 @@ class Group {
       photo: photo ?? this.photo,
     );
   }
-}
 
+  // Convert JSON to Group
+  factory Group.fromJson(Map<String, dynamic> json) {
+    return Group(
+      id: json['id'],
+      name: json['name'],
+      description: json['description'],
+      creatorId: json['creatorId'],
+      creationDate: DateTime.parse(json['creationDate']),
+      members: List<int>.from(json['members'] ?? []),
+      photo: json['photo'],
+    );
+  }
+
+  // Convert Group to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'creatorId': creatorId,
+      'creationDate': creationDate.toIso8601String(),
+      'members': members,
+      'photo': photo,
+    };
+  }
+}
