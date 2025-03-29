@@ -14,7 +14,6 @@ class AuthProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _user != null;
 
-  // Base URL for your PHP API - update this to your actual server URL
   final String _baseUrl = 'http://192.168.1.105/inkora_api';
 
   // Login method
@@ -28,7 +27,7 @@ class AuthProvider with ChangeNotifier {
         Uri.parse('$_baseUrl/login.php'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          'identifier': identifier, // Peut être un email ou un username
+          'identifier': identifier,
           'password': password,
         }),
       );
@@ -36,18 +35,19 @@ class AuthProvider with ChangeNotifier {
       final data = json.decode(response.body);
 
       if (response.statusCode == 200 && data['token'] != null) {
-        // Créer l'utilisateur
         _user = User(
           id: data['id_utilisateur'],
-          email: data['email'],
+          email: data['email'] ?? '',
           password: '',
           gender: data['genre'] ?? '',
-          registrationDate: DateTime.parse(data['date_inscription']),
-          status: data['statut'],
-          username: data['username'],
+          registrationDate: DateTime.tryParse(data['date_inscription'] ?? '') ??
+              DateTime.now(),
+          status: data['statut'] ?? '',
+          username: data['username'] ?? '',
+          bio: data['bio'] ?? '',
+          photo: data['photo'] ?? '',
         );
 
-        // Sauvegarder le token et le username
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('auth_token', data['token']);
         await prefs.setString('username', data['username']);
@@ -90,17 +90,15 @@ class AuthProvider with ChangeNotifier {
           'username': username,
           'email': email,
           'password': password,
-          'genre':
-              gender, // Note: your backend uses 'genre' instead of 'gender'
+          'genre': gender,
           'date_naissance': birthDate?.toIso8601String(),
-          'adresse': country, // Using 'adresse' field for country
+          'adresse': country,
         }),
       );
 
       final data = json.decode(response.body);
 
       if (response.statusCode == 200 && data['message'] != null) {
-        // Registration successful, now login
         return await login(email, password);
       } else {
         _errorMessage =
@@ -117,7 +115,7 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Check if user is already logged in
+  // Auto login using saved token and username
   Future<bool> autoLogin() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
@@ -127,20 +125,88 @@ class AuthProvider with ChangeNotifier {
       return false;
     }
 
-    // Create a basic user object from stored data
-    // In a real app, you would make an API call to get full user details
-    _user = User(
-      id: 0, // We don't have the ID stored
-      email: '', // We don't have the email stored
-      password: '', // Don't store password
-      gender: '', // We don't have this stored
-      registrationDate: DateTime.now(),
-      status: 'actif',
-      username: username,
-    );
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/user_details.php?username=$username'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
 
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200 && data['user'] != null) {
+        _user = User(
+          id: data['user']['id_utilisateur'],
+          email: data['user']['email'] ?? '',
+          password: '',
+          gender: data['user']['genre'] ?? '',
+          registrationDate:
+              DateTime.tryParse(data['user']['date_inscription'] ?? '') ??
+                  DateTime.now(),
+          status: data['user']['statut'] ?? '',
+          username: data['user']['username'] ?? '',
+        );
+
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      _errorMessage = 'Failed to fetch user details. Please try again.';
+    }
+
+    return false;
+  }
+
+  // Update profile method
+  Future<bool> updateProfile({
+    required String username,
+    String? bio,
+    String? photoPath,
+  }) async {
+    if (_user == null) return false;
+
+    _isLoading = true;
     notifyListeners();
-    return true;
+
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/update_profile.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'id_utilisateur': _user!.id,
+          'username': username,
+          'bio': bio,
+          'photo':
+              photoPath, // You should handle image upload separately if needed
+        }),
+      );
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        _user = _user!.copyWith(
+          username: username,
+          bio: bio,
+          photo: photoPath,
+        );
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('username', username);
+
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = data['error'] ?? 'Failed to update profile';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = 'Network error. Please try again.';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 
   // Logout method

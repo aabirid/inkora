@@ -17,9 +17,8 @@ class MyProfilePage extends StatefulWidget {
 }
 
 class _MyProfilePageState extends State<MyProfilePage> {
-  late User _user; // Mutable user instance
+  late User _user;
   int selectedTab = 0;
-
   final List<Book> myBooks = [
     Book(
       id: 1,
@@ -50,48 +49,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
       title: "My Fantasy Collection",
       visibility: "public",
       creationDate: DateTime.now(),
-      books: [
-        Book(
-          id: 1,
-          title: "The Alchemist",
-          author: "Paulo Coelho",
-          coverImage: "assets/images/book_cover7.jpeg",
-          description: "A journey to find one's destiny.",
-          rating: 4.5,
-          chapters: 15,
-          status: "Completed",
-        ),
-        Book(
-          id: 2,
-          title: "1984",
-          author: "George Orwell",
-          coverImage: "assets/images/book_cover6.jpeg",
-          description: "A dystopian future ruled by surveillance.",
-          rating: 4.8,
-          chapters: 24,
-          status: "Completed",
-        ),
-        Book(
-          id: 3,
-          title: "The Alchemist",
-          author: "Paulo Coelho",
-          coverImage: "assets/images/book_cover5.jpeg",
-          description: "A journey to find one's destiny.",
-          rating: 4.5,
-          chapters: 15,
-          status: "Completed",
-        ),
-        Book(
-          id: 4,
-          title: "1984",
-          author: "George Orwell",
-          coverImage: "assets/images/book_cover3.jpeg",
-          description: "A dystopian future ruled by surveillance.",
-          rating: 4.8,
-          chapters: 24,
-          status: "Completed",
-        ),
-      ],
+      books: [],
       likesCount: 230,
       booksCount: 15,
     ),
@@ -99,59 +57,17 @@ class _MyProfilePageState extends State<MyProfilePage> {
       id: 2,
       userId: 1,
       title: "Top Mystery Picks",
-      visibility: "private",
+      visibility: "public",
       creationDate: DateTime.now(),
-      books: [
-        Book(
-          id: 1,
-          title: "The Alchemist",
-          author: "Paulo Coelho",
-          coverImage: "assets/images/book_cover4.jpeg",
-          description: "A journey to find one's destiny.",
-          rating: 4.5,
-          chapters: 15,
-          status: "Completed",
-        ),
-        Book(
-          id: 2,
-          title: "1984",
-          author: "George Orwell",
-          coverImage: "assets/images/book_cover5.jpeg",
-          description: "A dystopian future ruled by surveillance.",
-          rating: 4.8,
-          chapters: 24,
-          status: "Completed",
-        ),
-        Book(
-          id: 3,
-          title: "The Alchemist",
-          author: "Paulo Coelho",
-          coverImage: "assets/images/book_cover2.jpeg",
-          description: "A journey to find one's destiny.",
-          rating: 4.5,
-          chapters: 15,
-          status: "Completed",
-        ),
-        Book(
-          id: 4,
-          title: "1984",
-          author: "George Orwell",
-          coverImage: "assets/images/book_cover8.jpeg",
-          description: "A dystopian future ruled by surveillance.",
-          rating: 4.8,
-          chapters: 24,
-          status: "Completed",
-        ),
-      ],
+      books: [],
       likesCount: 340,
       booksCount: 10,
     ),
   ];
-
   @override
   void initState() {
     super.initState();
-    _user = widget.currentUser; // Initialize with the passed user
+    _user = widget.currentUser;
   }
 
   @override
@@ -180,9 +96,11 @@ class _MyProfilePageState extends State<MyProfilePage> {
           CircleAvatar(
             radius: 40,
             backgroundImage: _user.photo != null
-                ? FileImage(File(_user
-                    .photo!)) // NetworkImage to load the image from a remote server. FileImage f file path returned by the database
-                : const AssetImage("assets/images/profile_default.jpeg"),
+                ? (_user.photo!.startsWith('http')
+                    ? NetworkImage(_user.photo!) // Network image
+                    : FileImage(File(_user.photo!))) // Local file image
+                : const AssetImage("assets/images/profile_default.jpeg")
+                    as ImageProvider, // Default image
           ),
           const SizedBox(height: 10),
           Row(
@@ -196,7 +114,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
           const SizedBox(height: 10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: [              
+            children: [
               Text(_user.username),
               Text(_user.bio ?? ""),
             ],
@@ -213,7 +131,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
 
               if (updatedUser != null) {
                 setState(() {
-                  _user = updatedUser; // Update local state
+                  _user = updatedUser; // Update the user with the new profile
                 });
               }
             },
@@ -230,13 +148,13 @@ class _MyProfilePageState extends State<MyProfilePage> {
   Widget _buildTabBar() {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor, // Background color
+        color: Theme.of(context).scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1), // Soft shadow
+            color: Colors.black.withOpacity(0.1),
             spreadRadius: 1,
             blurRadius: 5,
-            offset: const Offset(0, 2), // Shadow positioned below
+            offset: const Offset(0, 2),
           ),
         ],
       ),
