@@ -2,18 +2,55 @@ import 'package:flutter/material.dart';
 import 'package:inkora/models/booklist.dart';
 import 'package:inkora/screens/search/search_page.dart';
 import 'package:inkora/widgets/book_card.dart';
+import 'package:inkora/services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class BooklistOverview extends StatefulWidget {
-  final Booklist booklist;
+  final int booklistId;
 
-  const BooklistOverview({super.key, required this.booklist});
+  const BooklistOverview({super.key, required this.booklistId});
 
   @override
   _BooklistOverviewState createState() => _BooklistOverviewState();
 }
 
 class _BooklistOverviewState extends State<BooklistOverview> {
-  bool isSaved = false; // Local state for bookmark status
+  late Future<Booklist> _booklistFuture;
+  late Future<bool> _isFavoritedFuture;
+  final ApiService _apiService = ApiService();
+  int _userId = 1; // Default user ID, should be replaced with actual logged-in user ID
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
+    _refreshData();
+  }
+
+  Future<void> _loadUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userId = prefs.getInt('user_id') ?? 1;
+    });
+  }
+
+  void _refreshData() {
+    _booklistFuture = _apiService.getBooklistById(widget.booklistId);
+    _isFavoritedFuture = _apiService.isBooklistFavorited(_userId, widget.booklistId);
+  }
+
+  Future<void> _toggleFavorite() async {
+    final success = await _apiService.toggleBooklistFavorite(_userId, widget.booklistId);
+    if (success) {
+      setState(() {
+        _isFavoritedFuture = _apiService.isBooklistFavorited(_userId, widget.booklistId);
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update favorite status')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +58,16 @@ class _BooklistOverviewState extends State<BooklistOverview> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.booklist.title, style: theme.textTheme.titleLarge),
+        title: FutureBuilder<Booklist>(
+          future: _booklistFuture,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return Text(snapshot.data!.title, style: theme.textTheme.titleLarge);
+            } else {
+              return const Text('Booklist');
+            }
+          },
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -40,96 +86,121 @@ class _BooklistOverviewState extends State<BooklistOverview> {
           IconButton(
             icon: const Icon(Icons.share_rounded),
             onPressed: () {
-              // Handle sharing functionality here
+              // Implement sharing functionality
             },
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              height: 100, // Fixed height for consistency
-              decoration: BoxDecoration(
-                color: theme.scaffoldBackgroundColor, // 🎨 Using theme color
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
+      body: FutureBuilder<Booklist>(
+        future: _booklistFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData) {
+            return const Center(child: Text('Booklist not found'));
+          }
+
+          final booklist = snapshot.data!;
+          
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  height: 100, // Fixed height for consistency
+                  decoration: BoxDecoration(
+                    color: theme.scaffoldBackgroundColor,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Expanded(
-                        child: Text(
-                          widget.booklist.title,
-                          style: theme.textTheme.titleLarge, // 🎨 Use theme text style
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              booklist.title,
+                              style: theme.textTheme.titleLarge,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          FutureBuilder<bool>(
+                            future: _isFavoritedFuture,
+                            builder: (context, snapshot) {
+                              final isFavorited = snapshot.data ?? false;
+                              return IconButton(
+                                icon: Icon(
+                                  isFavorited ? Icons.bookmark : Icons.bookmark_border,
+                                  color: isFavorited ? theme.primaryColor : Colors.grey,
+                                ),
+                                onPressed: _toggleFavorite,
+                              );
+                            },
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        icon: Icon(
-                          isSaved ? Icons.bookmark : Icons.bookmark_border,
-                          color: isSaved ? theme.primaryColor : Colors.grey,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            isSaved = !isSaved;
-                          });
-                        },
+                      Row(
+                        children: [
+                          const Icon(Icons.favorite, size: 16, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Text(
+                            "${booklist.likesCount}",
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                          const SizedBox(width: 12),
+                          const Icon(Icons.menu_book, size: 16, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Text(
+                            "${booklist.booksCount}",
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  Row(
-                    children: [
-                      const Icon(Icons.favorite, size: 16, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Text(
-                        "${widget.booklist.likesCount}",
-                        style: theme.textTheme.bodyMedium, // 🎨 Themed text
-                      ),
-                      const SizedBox(width: 12),
-                      const Icon(Icons.menu_book, size: 16, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Text(
-                        "${widget.booklist.booksCount}",
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: booklist.books != null && booklist.books!.isNotEmpty
+                      ? RefreshIndicator(
+                          onRefresh: () async {
+                            setState(() {
+                              _refreshData();
+                            });
+                          },
+                          child: ListView.builder(
+                            itemCount: booklist.books!.length,
+                            itemBuilder: (context, index) {
+                              return BookCard(book: booklist.books![index]);
+                            },
+                          ),
+                        )
+                      : Center(
+                          child: Text(
+                            "No books available in this booklist.",
+                            style: theme.textTheme.bodyLarge,
+                          ),
+                        ),
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: widget.booklist.books != null && widget.booklist.books!.isNotEmpty
-                  ? ListView.builder(
-                      itemCount: widget.booklist.books!.length,
-                      itemBuilder: (context, index) {
-                        return BookCard(book: widget.booklist.books![index]);
-                      },
-                    )
-                  : Center(
-                      child: Text(
-                        "No books available in this booklist.",
-                        style: theme.textTheme.bodyLarge, // 🎨 Themed text
-                      ),
-                    ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 }
+

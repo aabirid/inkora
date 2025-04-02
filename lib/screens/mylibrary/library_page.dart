@@ -101,7 +101,7 @@ class LibraryPage extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => BookOverview(book: books[index]),
+                builder: (context) => BookOverview(bookId: books[index].id),
               ),
             );
           },
@@ -128,7 +128,7 @@ class LibraryPage extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => BooklistOverview(booklist: booklists[index]),
+                builder: (context) => BooklistOverview(booklistId: booklists[index].id),
               ),
             );
           },

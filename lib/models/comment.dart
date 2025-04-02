@@ -1,5 +1,3 @@
-import 'comment_reply.dart';
-
 class Comment {
   final int id;
   final int userId;
@@ -7,9 +5,9 @@ class Comment {
   final int bookId;
   final String content;
   final DateTime commentDate;
-  final List<CommentReply> replies;
   final int likesCount;
   final bool isLikedByCurrentUser;
+  final String? userPhoto; // Add userPhoto field
 
   Comment({
     required this.id,
@@ -18,10 +16,10 @@ class Comment {
     required this.bookId,
     required this.content,
     required this.commentDate,
-    List<CommentReply>? replies,
     this.likesCount = 0,
     this.isLikedByCurrentUser = false, // Default to false to avoid null
-  }) : this.replies = replies ?? [];
+    this.userPhoto, // Make it optional
+  });
 
   // Create a copy of this comment with updated properties
   Comment copyWith({
@@ -31,7 +29,6 @@ class Comment {
     int? bookId,
     String? content,
     DateTime? commentDate,
-    List<CommentReply>? replies,
     int? likesCount,
     bool? isLikedByCurrentUser,
   }) {
@@ -42,7 +39,6 @@ class Comment {
       bookId: bookId ?? this.bookId,
       content: content ?? this.content,
       commentDate: commentDate ?? this.commentDate,
-      replies: replies ?? this.replies,
       likesCount: likesCount ?? this.likesCount,
       isLikedByCurrentUser: isLikedByCurrentUser ?? this.isLikedByCurrentUser,
     );
@@ -56,14 +52,13 @@ class Comment {
       userName: json['userName'] ?? 'Unknown User',
       bookId: json['bookId'] ?? 0,
       content: json['content'] ?? '',
-      commentDate: json['commentDate'] != null 
-          ? DateTime.parse(json['commentDate']) 
+      commentDate: json['commentDate'] != null
+          ? DateTime.parse(json['commentDate'])
           : DateTime.now(),
-      replies: json['replies'] != null 
-          ? (json['replies'] as List).map((rep) => CommentReply.fromJson(rep)).toList() 
-          : [],
       likesCount: json['likesCount'] ?? 0,
-      isLikedByCurrentUser: json['isLikedByCurrentUser'] ?? false, // Default to false
+      isLikedByCurrentUser:
+          json['isLikedByCurrentUser'] ?? false, // Default to false
+      userPhoto: json['userPhoto'], // Parse userPhoto from JSON
     );
   }
 
@@ -76,20 +71,9 @@ class Comment {
       'bookId': bookId,
       'content': content,
       'commentDate': commentDate.toIso8601String(),
-      'replies': replies.map((rep) => rep.toJson()).toList(),
       'likesCount': likesCount,
       'isLikedByCurrentUser': isLikedByCurrentUser,
+      'userPhoto': userPhoto, // Include userPhoto in JSON
     };
   }
-
-  // Database mapping (for future use)
-  static Map<String, String> get dbMapping => {
-    'id': 'id_commentaire',
-    'userId': 'id_utilisateur',
-    'bookId': 'id_livre',
-    'content': 'contenu',
-    'commentDate': 'date_commentaire',
-    'likesCount': 'nombre_likes',
-  };
 }
-

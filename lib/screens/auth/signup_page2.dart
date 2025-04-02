@@ -79,7 +79,7 @@ class _SignupPage2State extends State<SignupPage2> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Colors.blue, // Header background color
+              primary: Colors.green, // Header background color
               onPrimary: Colors.white, // Header text color
               onSurface: Colors.black, // Calendar text color
             ),

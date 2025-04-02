@@ -183,7 +183,7 @@ class HomePage extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => BookOverview(book: books[index]),
+                builder: (context) => BookOverview(bookId: books[index].id),
               ),
             );
           },

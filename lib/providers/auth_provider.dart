@@ -14,7 +14,7 @@ class AuthProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _user != null;
 
-  final String _baseUrl = 'http://192.168.1.105/inkora_api';
+  final String _baseUrl = 'http://192.168.1.100/inkora_api';
 
   // Login method
   Future<bool> login(String identifier, String password) async {

@@ -18,7 +18,7 @@ class MyBooklistCard extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (context) =>
-                BooklistOverview(booklist: booklist), // Pass Booklist object
+                BooklistOverview(booklistId: booklist.id), // Pass Booklist object
           ),
         );
       },

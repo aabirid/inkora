@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:inkora/widgets/reading_settings_sidebar.dart';
 import 'package:inkora/widgets/chapters_sidebar.dart';
+import 'package:inkora/services/api_service.dart';
+import 'package:inkora/models/chapter.dart';
+import 'package:inkora/models/book.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ReadBookPage extends StatefulWidget {
-  const ReadBookPage({super.key});
+  final int bookId;
+  
+  const ReadBookPage({super.key, required this.bookId});
 
   @override
   State<ReadBookPage> createState() => _ReadBookPageState();
@@ -11,52 +17,141 @@ class ReadBookPage extends StatefulWidget {
 
 class _ReadBookPageState extends State<ReadBookPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final ApiService _apiService = ApiService();
+  
+  bool _isLoading = true;
+  bool _hasError = false;
+  String _errorMessage = '';
+  
+  Book? _book;
+  List<Chapter> _chapters = [];
+  int _currentChapterIndex = 0;
+  int _userId = 1; // Default user ID, should be replaced with actual logged-in user ID
+  
   double _fontSize = 16.0;
   bool _isDarkMode = false;
   Color _backgroundColor = Colors.white;
   Color _textColor = Colors.black;
-  int _currentChapterIndex = 8;
+  
+  String _chapterContent = 'Loading chapter content...';
 
-  final List<String> _chapters = [
-    'Prologue',
-    'Chapter 1',
-    'Chapter 2',
-    'Chapter 3',
-    'Chapter 4',
-    'Chapter 5',
-    'Chapter 6',
-    'Chapter 7',
-    'Chapter 8',
-    'Chapter 9',
-    'Chapter 10',
-    'Chapter 11',
-    'Chapter 12',
-    'Chapter 13',
-    'Chapter 14',
-    'Chapter 15',
-    'Chapter 16',
-    'Chapter 17',
-    'Chapter 18',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId().then((_) => _loadData());
+  }
 
-  final String _chapterContent = '"Do you really think we\'ll find Wendy again?" Nibs asked, flying through the night sky.\n\n'
-      '"I\'m sure of it," Peter said as they approached the Tower Bridge. "I know where her house is by heart."\n\n'
-      'They wove between the two bridge towers, passing over motor cars and horse carriages down below.\n\n'
-      '"London sure is big," one twin said, soaring above the Tower of London.\n\n'
-      '"Yeah, maybe even bigger than Neverland," the other twin said as they flew by St. Paul\'s Cathedral.\n\n'
-      'They closed in on the neighborhood of Bloomsbury.\n\n'
-      'Peter and Tink flew down to a corner house. "This is the one! This is where the Darlings live!"\n\n'
-      'The Lost Boys caught up with them, and they peered into the windows of the house. "Where\'s Wendy?" Cubby asked.\n\n'
-      '"I don\'t know. That\'s what I\'m trying to find out," Peter said. He looked into the nursery window, and he saw John and Michael inside. John was in his bed reading one of his books, and Michael was playing with some toy soldiers on the floor. No Wendy, though.\n\n'
-      'Peter floated over to the next window, which was someone\'s bedroom. A girl\'s bedroom, it seemed like. There was a vanity, and at the vanity was a teenaged girl brushing her hair. The girl looked like Wendy. Then it hit Peter that that was Wendy.\n\n'
-      '"Wendy?" Peter uttered under his breath.\n\n'
-      '"You found her?" Slightly said. The Lost Boys gathered at the window.\n\n'
-      '"Yeah, but... she grew up," Peter said.\n\n'
-      'The boys gasped.\n\n'
-      'Peter continued, "I can\'t believe it. How\'d that happen? It wasn\'t even that long ago since she left."\n\n'
-      '"I guess that\'s how things go in the real world," Nibs said.\n\n'
-      '"Why do people have to grow up so fast?" Peter said. "It\'s just not fair."\n\n'
-      '"Do you still wanna say hi to her?" Cubby said.';
+  Future<void> _loadUserId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _userId = prefs.getInt('user_id') ?? 1;
+      });
+    } catch (e) {
+      print('Error loading user ID: $e');
+      // Continue with default user ID
+    }
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
+
+    try {
+      // Load book details
+      final book = await _apiService.getBookById(widget.bookId);
+      
+      // Load chapters
+      final chapters = await _apiService.getChaptersByBookId(widget.bookId);
+      
+      if (chapters.isEmpty) {
+        setState(() {
+          _book = book;
+          _chapters = [];
+          _chapterContent = 'This book has no chapters yet.';
+          _isLoading = false;
+        });
+        return;
+      }
+      
+      // Get user's reading progress
+      int currentChapterId = 0;
+      try {
+        currentChapterId = await _apiService.getReadingProgress(_userId, widget.bookId);
+      } catch (e) {
+        print('Error getting reading progress: $e');
+        // Continue with first chapter
+      }
+      
+      // Find the index of the current chapter
+      int index = 0;
+      if (currentChapterId > 0) {
+        index = chapters.indexWhere((chapter) => chapter.id == currentChapterId);
+        if (index == -1) index = 0; // Default to first chapter if not found
+      }
+      
+      // Load chapter content
+      String content = 'Loading chapter content...';
+      try {
+        content = await _apiService.getChapterContent(chapters[index].id);
+      } catch (e) {
+        print('Error loading chapter content: $e');
+        content = 'Failed to load chapter content. Please try again.';
+      }
+      
+      if (mounted) {
+        setState(() {
+          _book = book;
+          _chapters = chapters;
+          _currentChapterIndex = index;
+          _chapterContent = content;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading book data: $e');
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _errorMessage = 'Failed to load book: ${e.toString()}';
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadChapterContent(int chapterId) async {
+    setState(() {
+      _chapterContent = 'Loading chapter content...';
+    });
+    
+    try {
+      final content = await _apiService.getChapterContent(chapterId);
+      
+      // Update reading progress
+      try {
+        await _apiService.updateReadingProgress(_userId, widget.bookId, chapterId);
+      } catch (e) {
+        print('Error updating reading progress: $e');
+        // Continue without updating progress
+      }
+      
+      if (mounted) {
+        setState(() {
+          _chapterContent = content;
+        });
+      }
+    } catch (e) {
+      print('Error loading chapter content: $e');
+      if (mounted) {
+        setState(() {
+          _chapterContent = 'Failed to load chapter content: ${e.toString()}';
+        });
+      }
+    }
+  }
 
   void _openChaptersSidebar() {
     _scaffoldKey.currentState?.openDrawer();
@@ -80,11 +175,35 @@ class _ReadBookPageState extends State<ReadBookPage> {
     });
   }
 
-  void _selectChapter(int index) {
-    setState(() {
-      _currentChapterIndex = index;
-    });
-    Navigator.pop(context); // Close the drawer
+  void _selectChapter(int index) async {
+    if (index >= 0 && index < _chapters.length && index != _currentChapterIndex) {
+      setState(() {
+        _currentChapterIndex = index;
+      });
+      
+      await _loadChapterContent(_chapters[index].id);
+      Navigator.pop(context); // Close the drawer
+    }
+  }
+
+  void _goToPreviousChapter() {
+    if (_currentChapterIndex > 0) {
+      final newIndex = _currentChapterIndex - 1;
+      setState(() {
+        _currentChapterIndex = newIndex;
+      });
+      _loadChapterContent(_chapters[newIndex].id);
+    }
+  }
+
+  void _goToNextChapter() {
+    if (_currentChapterIndex < _chapters.length - 1) {
+      final newIndex = _currentChapterIndex + 1;
+      setState(() {
+        _currentChapterIndex = newIndex;
+      });
+      _loadChapterContent(_chapters[newIndex].id);
+    }
   }
 
   @override
@@ -108,7 +227,7 @@ class _ReadBookPageState extends State<ReadBookPage> {
           icon: const Icon(Icons.arrow_back_ios, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Alice in Neverland'),
+        title: Text(_book?.title ?? 'Reading'),
         actions: [
           IconButton(
             icon: const Text(
@@ -126,45 +245,125 @@ class _ReadBookPageState extends State<ReadBookPage> {
           ),
         ],
       ),
-      drawer: ChaptersSidebar(
-        chapters: _chapters,
-        currentChapterIndex: _currentChapterIndex,
-        onChapterSelected: _selectChapter,
-      ),
+      drawer: _chapters.isEmpty 
+          ? null 
+          : ChaptersSidebar(
+              chapters: _chapters.map((c) => c.title).toList(),
+              currentChapterIndex: _currentChapterIndex,
+              onChapterSelected: _selectChapter,
+            ),
       endDrawer: ReadingSettingsSidebar(
         onFontSizeChanged: _updateFontSize,
         onThemeChanged: _updateTheme,
         currentFontSize: _fontSize,
         isDarkMode: _isDarkMode,
       ),
-      body: Container(
-        color: effectiveBackgroundColor,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  _chapters[_currentChapterIndex],
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: effectiveTextColor,
+      body: _isLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : _hasError 
+              ? _buildErrorView()
+              : Container(
+                  color: effectiveBackgroundColor,
+                  child: Stack(
+                    children: [
+                      // Main content
+                      SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                _chapters.isNotEmpty && _currentChapterIndex < _chapters.length
+                                    ? _chapters[_currentChapterIndex].title
+                                    : 'Chapter',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: effectiveTextColor,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _chapterContent,
+                                style: TextStyle(
+                                  fontSize: _fontSize,
+                                  color: effectiveTextColor,
+                                  height: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 60), // Space for navigation buttons
+                            ],
+                          ),
+                        ),
+                      ),
+                      
+                      // Navigation buttons
+                      if (_chapters.isNotEmpty)
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: Container(
+                            color: effectiveBackgroundColor.withOpacity(0.9),
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.arrow_back_ios,
+                                    color: _currentChapterIndex > 0
+                                        ? effectiveTextColor
+                                        : effectiveTextColor.withOpacity(0.3),
+                                  ),
+                                  onPressed: _currentChapterIndex > 0 ? _goToPreviousChapter : null,
+                                  tooltip: 'Previous Chapter',
+                                ),
+                                Text(
+                                  '${_currentChapterIndex + 1} / ${_chapters.length}',
+                                  style: TextStyle(color: effectiveTextColor),
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.arrow_forward_ios,
+                                    color: _currentChapterIndex < _chapters.length - 1
+                                        ? effectiveTextColor
+                                        : effectiveTextColor.withOpacity(0.3),
+                                  ),
+                                  onPressed: _currentChapterIndex < _chapters.length - 1 ? _goToNextChapter : null,
+                                  tooltip: 'Next Chapter',
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  _chapterContent,
-                  style: TextStyle(
-                    fontSize: _fontSize,
-                    color: effectiveTextColor,
-                    height: 1.5,
-                  ),
-                ),
-              ],
+    );
+  }
+
+  Widget _buildErrorView() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
             ),
-          ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _loadData,
+              child: const Text('Try Again'),
+            ),
+          ],
         ),
       ),
     );

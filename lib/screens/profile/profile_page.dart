@@ -219,7 +219,7 @@ class _ProfilePageState extends State<ProfilePage> {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => BookOverview(book: items[index]),
+                  builder: (context) => BookOverview(bookId: items[index]),
                 ),
               ),
             )
@@ -229,7 +229,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      BooklistOverview(booklist: items[index]),
+                      BooklistOverview(booklistId: items[index]),
                 ),
               ),
             ),

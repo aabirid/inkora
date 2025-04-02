@@ -17,11 +17,23 @@ class NewBookPage extends StatefulWidget {
 class _NewBookPageState extends State<NewBookPage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  List<String> _selectedGenres = [];
   String _selectedGenre = '';
+  bool _isPublished = false;
   File? _coverImage;
   bool _isLoading = false;
 
   bool get _isFormValid => _titleController.text.isNotEmpty;
+
+  void _toggleGenre(String genre) {
+    setState(() {
+      if (_selectedGenres.contains(genre)) {
+        _selectedGenres.remove(genre);
+      } else {
+        _selectedGenres.add(genre);
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -34,7 +46,7 @@ class _NewBookPageState extends State<NewBookPage> {
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-      
+
       if (image != null) {
         setState(() {
           _coverImage = File(image.path);
@@ -49,13 +61,13 @@ class _NewBookPageState extends State<NewBookPage> {
 
   void _createBook() {
     if (!_isFormValid) return;
-    
+
     setState(() {
       _isLoading = true;
     });
 
     final dataService = Provider.of<MockDataService>(context, listen: false);
-    
+
     // Create new book
     final newBook = Book(
       id: 0, // Will be assigned by the service
@@ -71,13 +83,13 @@ class _NewBookPageState extends State<NewBookPage> {
           ? [dataService.categories.firstWhere((c) => c.name == _selectedGenre)]
           : [],
     );
-    
+
     dataService.addBook(newBook);
-    
+
     setState(() {
       _isLoading = false;
     });
-    
+
     // Get the ID of the newly created book
     final createdBook = dataService.books.firstWhere(
       (b) => b.title == _titleController.text,
@@ -92,7 +104,7 @@ class _NewBookPageState extends State<NewBookPage> {
         status: '',
       ),
     );
-    
+
     if (createdBook.id != 0) {
       // Navigate to add chapter
       Navigator.pushReplacement(
@@ -169,11 +181,13 @@ class _NewBookPageState extends State<NewBookPage> {
                                 ? Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(Icons.image, size: 40, color: Colors.grey[400]),
+                                      Icon(Icons.image,
+                                          size: 40, color: Colors.grey[400]),
                                       const SizedBox(height: 8),
                                       Text(
                                         'Add Cover',
-                                        style: TextStyle(color: Colors.grey[600]),
+                                        style:
+                                            TextStyle(color: Colors.grey[600]),
                                       ),
                                     ],
                                   )
@@ -199,16 +213,13 @@ class _NewBookPageState extends State<NewBookPage> {
                     required: true,
                   ),
                   const SizedBox(height: 16),
-                  _buildDropdownField(
-                    'Genre:',
-                    _selectedGenre.isEmpty ? 'Select' : _selectedGenre,
+                  _buildMultiSelectGenreField(
+                    'Genres:',
+                    _selectedGenres,
                     dataService.categories.map((c) => c.name).toList(),
-                    (value) {
-                      setState(() {
-                        _selectedGenre = value;
-                      });
-                    },
                   ),
+                  const SizedBox(height: 16),
+                  _buildPublishedSwitch(),
                   const SizedBox(height: 16),
                   _buildTextAreaField(
                     'Description:',
@@ -222,7 +233,8 @@ class _NewBookPageState extends State<NewBookPage> {
                       icon: const Icon(Icons.check),
                       label: const Text('Create Book'),
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
                       ),
                     ),
                   ),
@@ -275,7 +287,8 @@ class _NewBookPageState extends State<NewBookPage> {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
             onChanged: (value) {
               setState(() {});
@@ -286,19 +299,75 @@ class _NewBookPageState extends State<NewBookPage> {
     );
   }
 
-  Widget _buildDropdownField(
+  Widget _buildMultiSelectGenreField(
     String label,
-    String value,
+    List<String> selectedValues,
     List<String> options,
-    Function(String) onChanged,
   ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            SizedBox(
+              width: 100,
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: selectedValues
+                    .map((genre) => Chip(
+                          label: Text(genre),
+                          deleteIcon: const Icon(Icons.close, size: 16),
+                          onDeleted: () => _toggleGenre(genre),
+                        ))
+                    .toList(),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.only(left: 100),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: options
+                  .where((genre) => !selectedValues.contains(genre))
+                  .map((genre) => ActionChip(
+                        label: Text(genre),
+                        onPressed: () => _toggleGenre(genre),
+                      ))
+                  .toList(),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPublishedSwitch() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         SizedBox(
           width: 100,
           child: Text(
-            label,
+            'Published:',
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
@@ -306,29 +375,18 @@ class _NewBookPageState extends State<NewBookPage> {
           ),
         ),
         Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: DropdownButton<String>(
-              value: options.contains(value) ? value : null,
-              hint: Text(value),
-              isExpanded: true,
-              underline: Container(),
-              onChanged: (newValue) {
-                if (newValue != null) {
-                  onChanged(newValue);
-                }
-              },
-              items: options.map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-            ),
+          child: SwitchListTile(
+            title: Text(_isPublished ? 'Published' : 'Not Published'),
+            subtitle: Text(_isPublished
+                ? 'Your book is visible to readers'
+                : 'Your book is only visible to you'),
+            value: _isPublished,
+            contentPadding: EdgeInsets.zero,
+            onChanged: (value) {
+              setState(() {
+                _isPublished = value;
+              });
+            },
           ),
         ),
       ],
@@ -373,4 +431,3 @@ class _NewBookPageState extends State<NewBookPage> {
     );
   }
 }
-
