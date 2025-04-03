@@ -33,17 +33,17 @@ class Booklist {
   factory Booklist.fromJson(Map<String, dynamic> json) {
     return Booklist(
       id: json['id'] ?? 0,
-      userId: json['userId'] ?? 0,
+      userId: json['userId'] ?? json['user_id'] ?? 0,
       title: json['title'] ?? 'Unknown',
       visibility: json['visibility'] ?? 'private',
       creationDate: json['creationDate'] != null 
-          ? DateTime.parse(json['creationDate']) 
+          ? DateTime.tryParse(json['creationDate']) ?? DateTime.now()
           : DateTime.now(),
-      books: json['books'] != null 
-          ? (json['books'] as List).map((book) => Book.fromJson(book)).toList() 
-          : null,
-      likesCount: json['likesCount'] ?? 0,
-      booksCount: json['booksCount'] ?? 0,
+      books: json['books'] is List
+          ? (json['books'] as List).map((book) => Book.fromJson(book)).toList()
+          : [],
+      likesCount: json['likesCount'] ?? json['likes_count'] ?? 0,
+      booksCount: json['booksCount'] ?? json['books_count'] ?? 0,
     );
   }
 

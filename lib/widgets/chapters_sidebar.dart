@@ -21,21 +21,17 @@ class ChaptersSidebar extends StatelessWidget {
       color: theme.scaffoldBackgroundColor,
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          SizedBox(height: 25),
+          Container(            
+            padding: const EdgeInsets.all(25),
             color: theme.primaryColor.withOpacity(0.1),
             child: Row(
-              children: [
-                Icon(
-                  Icons.menu_book,
-                  color: theme.primaryColor,
-                ),
-                const SizedBox(width: 8),
+              children: [                
                 Text(
                   'Chapters',
                   style: theme.textTheme.titleLarge?.copyWith(
                     color: theme.primaryColor,
-                    fontSize: 18,
+                    fontSize: 20,
                   ),
                 ),
               ],

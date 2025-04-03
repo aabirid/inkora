@@ -1,76 +1,107 @@
 import 'package:flutter/material.dart';
 import 'package:inkora/models/book.dart';
 import 'package:inkora/models/booklist.dart';
+import 'package:inkora/services/api_service.dart';
 import 'package:inkora/widgets/simple_book_card.dart';
 import 'package:inkora/widgets/simple_booklist_card.dart';
 import 'package:inkora/screens/book/book_overview.dart';
 import 'package:inkora/screens/book/booklist_overview.dart';
 
-class LibraryPage extends StatelessWidget {
-  final List<Book> myBooks = [
-    Book(
-      id: 1,
-      title: "The Alchemist",
-      author: "Paulo Coelho",
-      coverImage: "assets/images/book_cover7.jpeg",
-      description: "A journey to find one's destiny.",
-      rating: 4.5,
-      chapters: 15,
-      status: "Completed",
-    ),
-    Book(
-      id: 2,
-      title: "1984",
-      author: "George Orwell",
-      coverImage: "assets/images/book_cover6.jpeg",
-      description: "A dystopian future ruled by surveillance.",
-      rating: 4.8,
-      chapters: 24,
-      status: "Completed",
-    ),
-  ];
+class LibraryPage extends StatefulWidget {
+  // Add an optional user parameter
+  final dynamic currentUser;
+  
+  const LibraryPage({super.key, this.currentUser});
 
-  final List<Booklist> myBooklists = [
-    Booklist(
-      id: 1,
-      userId: 101,
-      title: "Classics to Read",
-      visibility: "public",
-      creationDate: DateTime(2023, 5, 20),
-      likesCount: 100,
-      booksCount: 2,
-      books: [
-        Book(
-          id: 1,
-          title: "The Alchemist",
-          author: "Paulo Coelho",
-          coverImage: "assets/images/book_cover8.jpeg",
-          description: "A journey to find one's destiny.",
-          rating: 4.5,
-          chapters: 15,
-          status: "Completed",
-        ),
-      ],
-    ),
-  ];
+  @override
+  _LibraryPageState createState() => _LibraryPageState();
+}
 
-   LibraryPage({super.key});
+class _LibraryPageState extends State<LibraryPage> {
+  int? userId;
+  List<Book> myBooks = [];
+  List<Booklist> myBooklists = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  // Load the current user ID and fetch favorite books & booklists
+  Future<void> _loadUserData() async {
+    if (widget.currentUser != null && widget.currentUser.id != null) {
+      setState(() {
+        userId = widget.currentUser.id;
+      });
+      print("Using user ID from props: $userId");
+      _fetchFavorites(userId!);
+    } else {
+      // Fallback to API service if no user ID is provided
+      int? fetchedUserId = await ApiService().getCurrentUserId();
+      if (fetchedUserId != null) {
+        setState(() {
+          userId = fetchedUserId;
+        });
+        print("Using user ID from API service: $userId");
+        _fetchFavorites(fetchedUserId);
+      } else {
+        print("No user ID found!");
+        setState(() {
+          isLoading = false; // End loading state
+        });
+      }
+    }
+  }
+
+  // Fetch favorite books and booklists from API
+  Future<void> _fetchFavorites(int userId) async {
+    try {
+      print("Fetching favorites for user ID: $userId");
+      // Fetch books
+      final books = await ApiService().getFavoriteBooks(userId);
+      print("Fetched ${books.length} favorite books");
+
+      // Fetch booklists
+      final booklists = await ApiService().getFavoriteBooklists(userId);
+      print("Fetched ${booklists.length} favorite booklists");
+
+      // Update the state with fetched data
+      setState(() {
+        myBooks = books;
+        myBooklists = booklists;
+        isLoading = false; // Set loading to false once the data is fetched
+      });
+    } catch (e) {
+      print("Error fetching favorites: $e");
+      setState(() {
+        isLoading = false; // Set loading to false on error
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle("Saved Books"),
-          _buildBookGrid(myBooks),
-          const SizedBox(height: 20),
-          _buildSectionTitle("Saved Booklists"),
-          _buildBooklistGrid(myBooklists),
-        ],
-      ),
-    );
+    return isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionTitle("Saved Books"),
+                myBooks.isEmpty
+                    ? _buildEmptyMessage("No saved books yet.")
+                    : _buildBookGrid(myBooks),
+                const SizedBox(height: 20),
+                _buildSectionTitle("Saved Booklists"),
+                myBooklists.isEmpty
+                    ? _buildEmptyMessage("No saved booklists yet.")
+                    : _buildBooklistGrid(myBooklists),
+              ],
+            ),
+          );
   }
 
   Widget _buildSectionTitle(String title) {
@@ -79,6 +110,18 @@ class LibraryPage extends StatelessWidget {
       child: Text(
         title,
         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildEmptyMessage(String message) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Center(
+        child: Text(
+          message,
+          style: const TextStyle(fontSize: 16, color: Colors.grey),
+        ),
       ),
     );
   }
@@ -109,7 +152,7 @@ class LibraryPage extends StatelessWidget {
       },
     );
   }
-    
+
   Widget _buildBooklistGrid(List<Booklist> booklists) {
     return GridView.builder(
       shrinkWrap: true,
@@ -128,7 +171,8 @@ class LibraryPage extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => BooklistOverview(booklistId: booklists[index].id),
+                builder: (context) =>
+                    BooklistOverview(booklistId: booklists[index].id),
               ),
             );
           },

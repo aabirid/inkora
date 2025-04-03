@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:inkora/widgets/reading_settings_sidebar.dart';
 import 'package:inkora/widgets/chapters_sidebar.dart';
 import 'package:inkora/services/api_service.dart';
 import 'package:inkora/models/chapter.dart';
@@ -8,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ReadBookPage extends StatefulWidget {
   final int bookId;
-  
+
   const ReadBookPage({super.key, required this.bookId});
 
   @override
@@ -18,21 +17,22 @@ class ReadBookPage extends StatefulWidget {
 class _ReadBookPageState extends State<ReadBookPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ApiService _apiService = ApiService();
-  
+
   bool _isLoading = true;
   bool _hasError = false;
   String _errorMessage = '';
-  
+
   Book? _book;
   List<Chapter> _chapters = [];
   int _currentChapterIndex = 0;
-  int _userId = 1; // Default user ID, should be replaced with actual logged-in user ID
-  
+  int _userId =
+      1; // Default user ID, should be replaced with actual logged-in user ID
+
   double _fontSize = 16.0;
   bool _isDarkMode = false;
   Color _backgroundColor = Colors.white;
   Color _textColor = Colors.black;
-  
+
   String _chapterContent = 'Loading chapter content...';
 
   @override
@@ -62,10 +62,10 @@ class _ReadBookPageState extends State<ReadBookPage> {
     try {
       // Load book details
       final book = await _apiService.getBookById(widget.bookId);
-      
+
       // Load chapters
       final chapters = await _apiService.getChaptersByBookId(widget.bookId);
-      
+
       if (chapters.isEmpty) {
         setState(() {
           _book = book;
@@ -75,23 +75,25 @@ class _ReadBookPageState extends State<ReadBookPage> {
         });
         return;
       }
-      
+
       // Get user's reading progress
       int currentChapterId = 0;
       try {
-        currentChapterId = await _apiService.getReadingProgress(_userId, widget.bookId);
+        currentChapterId =
+            await _apiService.getReadingProgress(_userId, widget.bookId);
       } catch (e) {
         print('Error getting reading progress: $e');
         // Continue with first chapter
       }
-      
+
       // Find the index of the current chapter
       int index = 0;
       if (currentChapterId > 0) {
-        index = chapters.indexWhere((chapter) => chapter.id == currentChapterId);
+        index =
+            chapters.indexWhere((chapter) => chapter.id == currentChapterId);
         if (index == -1) index = 0; // Default to first chapter if not found
       }
-      
+
       // Load chapter content
       String content = 'Loading chapter content...';
       try {
@@ -100,7 +102,7 @@ class _ReadBookPageState extends State<ReadBookPage> {
         print('Error loading chapter content: $e');
         content = 'Failed to load chapter content. Please try again.';
       }
-      
+
       if (mounted) {
         setState(() {
           _book = book;
@@ -126,18 +128,19 @@ class _ReadBookPageState extends State<ReadBookPage> {
     setState(() {
       _chapterContent = 'Loading chapter content...';
     });
-    
+
     try {
       final content = await _apiService.getChapterContent(chapterId);
-      
+
       // Update reading progress
       try {
-        await _apiService.updateReadingProgress(_userId, widget.bookId, chapterId);
+        await _apiService.updateReadingProgress(
+            _userId, widget.bookId, chapterId);
       } catch (e) {
         print('Error updating reading progress: $e');
         // Continue without updating progress
       }
-      
+
       if (mounted) {
         setState(() {
           _chapterContent = content;
@@ -154,33 +157,17 @@ class _ReadBookPageState extends State<ReadBookPage> {
   }
 
   void _openChaptersSidebar() {
-    _scaffoldKey.currentState?.openDrawer();
-  }
-
-  void _openSettingsSidebar() {
     _scaffoldKey.currentState?.openEndDrawer();
   }
 
-  void _updateFontSize(double size) {
-    setState(() {
-      _fontSize = size;
-    });
-  }
-
-  void _updateTheme(Color backgroundColor, Color textColor) {
-    setState(() {
-      _backgroundColor = backgroundColor;
-      _textColor = textColor;
-      _isDarkMode = backgroundColor == Colors.black;
-    });
-  }
-
   void _selectChapter(int index) async {
-    if (index >= 0 && index < _chapters.length && index != _currentChapterIndex) {
+    if (index >= 0 &&
+        index < _chapters.length &&
+        index != _currentChapterIndex) {
       setState(() {
         _currentChapterIndex = index;
       });
-      
+
       await _loadChapterContent(_chapters[index].id);
       Navigator.pop(context); // Close the drawer
     }
@@ -210,13 +197,14 @@ class _ReadBookPageState extends State<ReadBookPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final systemBrightness = theme.brightness;
-    
-    // If we're not explicitly overriding with custom colors, use the system theme
-    final effectiveBackgroundColor = _backgroundColor == Colors.white && _textColor == Colors.black
+
+    final effectiveBackgroundColor = _backgroundColor == Colors.white &&
+            _textColor == Colors.black
         ? (systemBrightness == Brightness.dark ? Colors.black : Colors.white)
         : _backgroundColor;
-    
-    final effectiveTextColor = _backgroundColor == Colors.white && _textColor == Colors.black
+
+    final effectiveTextColor = _backgroundColor == Colors.white &&
+            _textColor == Colors.black
         ? (systemBrightness == Brightness.dark ? Colors.white : Colors.black)
         : _textColor;
 
@@ -230,112 +218,102 @@ class _ReadBookPageState extends State<ReadBookPage> {
         title: Text(_book?.title ?? 'Reading'),
         actions: [
           IconButton(
-            icon: const Text(
-              'Aa',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            onPressed: _openSettingsSidebar,
-          ),
-          IconButton(
             icon: const Icon(Icons.menu),
             onPressed: _openChaptersSidebar,
           ),
         ],
       ),
-      drawer: _chapters.isEmpty 
-          ? null 
+      endDrawer: _chapters.isEmpty
+          ? null
           : ChaptersSidebar(
               chapters: _chapters.map((c) => c.title).toList(),
               currentChapterIndex: _currentChapterIndex,
               onChapterSelected: _selectChapter,
             ),
-      endDrawer: ReadingSettingsSidebar(
-        onFontSizeChanged: _updateFontSize,
-        onThemeChanged: _updateTheme,
-        currentFontSize: _fontSize,
-        isDarkMode: _isDarkMode,
-      ),
-      body: _isLoading 
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _hasError 
+          : _hasError
               ? _buildErrorView()
               : Container(
                   color: effectiveBackgroundColor,
-                  child: Stack(
+                  child: Column(
                     children: [
-                      // Main content
-                      SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                _chapters.isNotEmpty && _currentChapterIndex < _chapters.length
-                                    ? _chapters[_currentChapterIndex].title
-                                    : 'Chapter',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: effectiveTextColor,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                _chapterContent,
-                                style: TextStyle(
-                                  fontSize: _fontSize,
-                                  color: effectiveTextColor,
-                                  height: 1.5,
-                                ),
-                              ),
-                              const SizedBox(height: 60), // Space for navigation buttons
-                            ],
-                          ),
-                        ),
-                      ),
-                      
-                      // Navigation buttons
-                      if (_chapters.isNotEmpty)
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          child: Container(
-                            color: effectiveBackgroundColor.withOpacity(0.9),
-                            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      // Chapter Content
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.arrow_back_ios,
-                                    color: _currentChapterIndex > 0
-                                        ? effectiveTextColor
-                                        : effectiveTextColor.withOpacity(0.3),
-                                  ),
-                                  onPressed: _currentChapterIndex > 0 ? _goToPreviousChapter : null,
-                                  tooltip: 'Previous Chapter',
-                                ),
                                 Text(
-                                  '${_currentChapterIndex + 1} / ${_chapters.length}',
-                                  style: TextStyle(color: effectiveTextColor),
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.arrow_forward_ios,
-                                    color: _currentChapterIndex < _chapters.length - 1
-                                        ? effectiveTextColor
-                                        : effectiveTextColor.withOpacity(0.3),
+                                  _chapters.isNotEmpty &&
+                                          _currentChapterIndex <
+                                              _chapters.length
+                                      ? _chapters[_currentChapterIndex].title
+                                      : 'Chapter',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: effectiveTextColor,
                                   ),
-                                  onPressed: _currentChapterIndex < _chapters.length - 1 ? _goToNextChapter : null,
-                                  tooltip: 'Next Chapter',
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _chapterContent,
+                                  style: TextStyle(
+                                    fontSize: _fontSize,
+                                    color: effectiveTextColor,
+                                    height:
+                                        1.5, // Adjust line height for better readability
+                                  ),
                                 ),
                               ],
                             ),
+                          ),
+                        ),
+                      ),
+
+                      // Navigation buttons (bottom)
+                      if (_chapters.isNotEmpty)
+                        Container(
+                          color: effectiveBackgroundColor.withOpacity(0.9),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  Icons.arrow_back_ios,
+                                  color: _currentChapterIndex > 0
+                                      ? effectiveTextColor
+                                      : effectiveTextColor.withOpacity(0.3),
+                                ),
+                                onPressed: _currentChapterIndex > 0
+                                    ? _goToPreviousChapter
+                                    : null,
+                                tooltip: 'Previous Chapter',
+                              ),
+                              Text(
+                                '${_currentChapterIndex + 1} / ${_chapters.length}',
+                                style: TextStyle(color: effectiveTextColor),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.arrow_forward_ios,
+                                  color: _currentChapterIndex <
+                                          _chapters.length - 1
+                                      ? effectiveTextColor
+                                      : effectiveTextColor.withOpacity(0.3),
+                                ),
+                                onPressed:
+                                    _currentChapterIndex < _chapters.length - 1
+                                        ? _goToNextChapter
+                                        : null,
+                                tooltip: 'Next Chapter',
+                              ),
+                            ],
                           ),
                         ),
                     ],
@@ -369,4 +347,3 @@ class _ReadBookPageState extends State<ReadBookPage> {
     );
   }
 }
-

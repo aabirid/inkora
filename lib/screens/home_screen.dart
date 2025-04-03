@@ -87,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         return HomePage();
       case 1:
-        return LibraryPage();
+        return LibraryPage(currentUser: currentUser); 
       case 2:
         return const WritePage();
       case 3:
@@ -106,3 +106,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+

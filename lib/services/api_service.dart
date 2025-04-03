@@ -7,6 +7,7 @@ import 'package:inkora/models/category.dart';
 import 'package:inkora/models/group.dart';
 import 'package:inkora/models/user.dart';
 import 'package:inkora/models/comment.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   // Base URL of your PHP API
@@ -26,6 +27,17 @@ class ApiService {
   }
 
   ApiService._internal();
+
+// Get current user ID from SharedPreferences
+  Future<int?> getCurrentUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userData = prefs.getString('auth_token');
+    if (userData != null) {
+      // Get user ID from SharedPreferences
+      return prefs.getInt('user_id');
+    }
+    return null;
+  }
 
   // ==================== SEARCH FUNCTIONALITY ====================
 
@@ -615,4 +627,86 @@ class ApiService {
       throw Exception('Failed to get reading progress: $e');
     }
   }
+
+  // Update the getFavoriteBooks method to handle the direct array response
+  Future<List<Book>> getFavoriteBooks(int userId) async {
+    final response =
+        await http.get(Uri.parse('$baseUrl/get_favorites.php?user_id=$userId'));
+
+    print("Response Status: ${response.statusCode}");
+    print("Response Body: ${response.body}");
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      
+      // Check if the response is an error message
+      if (data is Map && data.containsKey('status') && data['status'] == 'error') {
+        throw Exception(data['message'] ?? 'Failed to load favorite books');
+      }
+      
+      // Process the array of books
+      if (data is List) {
+        return data.map((json) {
+          // Map the database field names to the Book model field names
+          final mappedJson = {
+            'id': json['id_livre'],
+            'title': json['titre'],
+            'author': json['auteur'],
+            'coverImage': json['couverture'],
+            'description': json['description'] ?? '',
+            'rating': 0.0,  // Default values for required fields
+            'chapters': 0,
+            'status': 'Ongoing'
+          };
+          return Book.fromJson(mappedJson);
+        }).toList();
+      }
+      
+      return [];
+    } else {
+      throw Exception('Failed to load favorite books');
+    }
+  }
+
+  // Update the getFavoriteBooklists method to handle the direct array response
+  Future<List<Booklist>> getFavoriteBooklists(int userId) async {
+ final response = await http
+     .get(Uri.parse('$baseUrl/get_favorite_booklists.php?user_id=$userId'));
+
+ print("Response Status: ${response.statusCode}");
+ print("Response Body: ${response.body}");
+
+ if (response.statusCode == 200) {
+   final data = json.decode(response.body);
+   
+   // Check if the response is an error message
+   if (data is Map && data.containsKey('status') && data['status'] == 'error') {
+     throw Exception(data['message'] ?? 'Failed to load favorite booklists');
+   }
+   
+   // Process the array of booklists
+   if (data is List) {
+     return data.map((json) {
+       // Map the database field names to the Booklist model field names
+       final mappedJson = {
+         'id': json['id'],
+         'userId': userId,
+         'title': json['title'],
+         'visibility': json['visibility'],
+         'creationDate': DateTime.now().toIso8601String(),
+       };
+       return Booklist.fromJson(mappedJson);
+     }).toList();
+   } else {
+     // If the response isn't a list, log the data for debugging
+     print("Unexpected response format: $data");
+   }
+   
+   return [];
+ } else {
+   throw Exception('Failed to load favorite booklists');
+ }
 }
+
+}
+

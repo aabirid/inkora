@@ -31,18 +31,16 @@ class Book {
       id: json['id'] ?? 0,
       title: json['title'] ?? 'Unknown',
       author: json['author'] ?? 'Unknown',
-      coverImage: json['coverImage'] ?? 'assets/default_cover.png',
+      coverImage: json['coverImage'] ?? json['cover_image'] ?? 'assets/default_cover.png',
       description: json['description'] ?? '',
-      rating: (json['rating'] ?? 0).toDouble(),
+      rating: double.tryParse(json['rating'].toString()) ?? 0.0,
       chapters: json['chapters'] ?? 0,
       status: json['status'] ?? 'Ongoing',
       publishedDate: json['publishedDate'] != null
-          ? DateTime.parse(json['publishedDate'])
+          ? DateTime.tryParse(json['publishedDate'])
           : null,
-      categories: json['categories'] != null
-          ? (json['categories'] as List)
-              .map((cat) => Category.fromJson(cat))
-              .toList()
+      categories: json['categories'] is List
+          ? (json['categories'] as List).map((cat) => Category.fromJson(cat)).toList()
           : [],
     );
   }
