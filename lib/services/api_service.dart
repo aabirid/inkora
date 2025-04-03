@@ -708,5 +708,125 @@ class ApiService {
  }
 }
 
+
+// Get user's booklists
+Future<List<Booklist>> getUserBooklists(int userId) async {
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/booklist.php?action=read_by_user&user_id=$userId'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> booklistsData = json.decode(response.body);
+      return booklistsData.map((data) => Booklist.fromJson(data)).toList();
+    } else {
+      throw Exception('Failed to load booklists: ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Failed to load booklists: $e');
+  }
+}
+
+// Create a new booklist
+Future<Booklist?> createBooklist(int userId, String title, String visibility) async {
+  try {
+    final Map<String, dynamic> booklistData = {
+      'user_id': userId,
+      'title': title,
+      'visibility': visibility,
+    };
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/booklist.php?action=create'),
+      headers: headers,
+      body: json.encode(booklistData),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      if (responseData['status'] == 'success' && responseData.containsKey('booklist')) {
+        return Booklist.fromJson(responseData['booklist']);
+      }
+      return null;
+    } else {
+      throw Exception('Failed to create booklist: ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Failed to create booklist: $e');
+  }
+}
+
+// Add a book to a booklist
+Future<bool> addBookToBooklist(int userId, int booklistId, int bookId) async {
+  try {
+    final Map<String, dynamic> data = {
+      'user_id': userId,
+      'booklist_id': booklistId,
+      'book_id': bookId,
+    };
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/booklist_item.php?action=add'),
+      headers: headers,
+      body: json.encode(data),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      return responseData['status'] == 'success';
+    } else {
+      throw Exception('Failed to add book to booklist: ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Failed to add book to booklist: $e');
+  }
+}
+
+// Remove a book from a booklist
+Future<bool> removeBookFromBooklist(int userId, int booklistId, int bookId) async {
+  try {
+    final Map<String, dynamic> data = {
+      'user_id': userId,
+      'booklist_id': booklistId,
+      'book_id': bookId,
+    };
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/booklist_item.php?action=remove'),
+      headers: headers,
+      body: json.encode(data),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      return responseData['status'] == 'success';
+    } else {
+      throw Exception('Failed to remove book from booklist: ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Failed to remove book from booklist: $e');
+  }
+}
+
+// Get books in a booklist
+Future<List<Book>> getBooksInBooklist(int booklistId) async {
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/booklist_item.php?action=get_books&booklist_id=$booklistId'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> booksData = json.decode(response.body);
+      return booksData.map((data) => Book.fromJson(data)).toList();
+    } else {
+      throw Exception('Failed to load books in booklist: ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Failed to load books in booklist: $e');
+  }
+}
+
 }
 

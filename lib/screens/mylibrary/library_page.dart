@@ -29,57 +29,64 @@ class _LibraryPageState extends State<LibraryPage> {
     _loadUserData();
   }
 
-  // Load the current user ID and fetch favorite books & booklists
-  Future<void> _loadUserData() async {
-    if (widget.currentUser != null && widget.currentUser.id != null) {
+  Future<void> _fetchFavorites(int userId) async {
+  try {
+    print("Fetching favorites for user ID: $userId");
+    // Fetch books
+    final books = await ApiService().getFavoriteBooks(userId);
+    print("Fetched ${books.length} favorite books");
+
+    // Fetch booklists
+    final booklists = await ApiService().getFavoriteBooklists(userId);
+    print("Fetched ${booklists.length} favorite booklists");
+
+    // Check if the widget is still mounted before calling setState
+    if (mounted) {
       setState(() {
-        userId = widget.currentUser.id;
+        myBooks = books;
+        myBooklists = booklists;
+        isLoading = false; // Set loading to false once the data is fetched
       });
-      print("Using user ID from props: $userId");
-      _fetchFavorites(userId!);
-    } else {
-      // Fallback to API service if no user ID is provided
-      int? fetchedUserId = await ApiService().getCurrentUserId();
-      if (fetchedUserId != null) {
+    }
+  } catch (e) {
+    print("Error fetching favorites: $e");
+    if (mounted) {
+      setState(() {
+        isLoading = false; // Set loading to false on error
+      });
+    }
+  }
+}
+
+Future<void> _loadUserData() async {
+  if (widget.currentUser != null && widget.currentUser.id != null) {
+    setState(() {
+      userId = widget.currentUser.id;
+    });
+    print("Using user ID from props: $userId");
+    _fetchFavorites(userId!);
+  } else {
+    // Fallback to API service if no user ID is provided
+    int? fetchedUserId = await ApiService().getCurrentUserId();
+    if (fetchedUserId != null) {
+      if (mounted) {
         setState(() {
           userId = fetchedUserId;
         });
-        print("Using user ID from API service: $userId");
-        _fetchFavorites(fetchedUserId);
-      } else {
-        print("No user ID found!");
+      }
+      print("Using user ID from API service: $userId");
+      _fetchFavorites(fetchedUserId);
+    } else {
+      print("No user ID found!");
+      if (mounted) {
         setState(() {
           isLoading = false; // End loading state
         });
       }
     }
   }
+}
 
-  // Fetch favorite books and booklists from API
-  Future<void> _fetchFavorites(int userId) async {
-    try {
-      print("Fetching favorites for user ID: $userId");
-      // Fetch books
-      final books = await ApiService().getFavoriteBooks(userId);
-      print("Fetched ${books.length} favorite books");
-
-      // Fetch booklists
-      final booklists = await ApiService().getFavoriteBooklists(userId);
-      print("Fetched ${booklists.length} favorite booklists");
-
-      // Update the state with fetched data
-      setState(() {
-        myBooks = books;
-        myBooklists = booklists;
-        isLoading = false; // Set loading to false once the data is fetched
-      });
-    } catch (e) {
-      print("Error fetching favorites: $e");
-      setState(() {
-        isLoading = false; // Set loading to false on error
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

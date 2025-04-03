@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:inkora/models/book.dart';
 import 'package:inkora/models/comment.dart';
+import 'package:inkora/screens/book/booklist_dialog.dart';
 import 'package:inkora/screens/book/read_book_page.dart';
 import 'package:inkora/screens/search/search_page.dart';
 import 'package:inkora/services/api_service.dart';
@@ -374,6 +375,17 @@ class _BookOverviewState extends State<BookOverview> {
                           : Icons.bookmark_border_outlined,
                       color: _isBookmarked ? Colors.blue : null,
                     ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.more_vert),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return BooklistDialog(bookId: _book!.id);
+                        },
+                      );
+                    },
                   ),
                 ],
               )
