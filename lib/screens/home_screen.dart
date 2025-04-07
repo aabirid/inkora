@@ -21,6 +21,73 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int currentPage = 0;
 
+  // Show logout confirmation dialog
+  Future<void> _showLogoutConfirmation() async {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // User must tap a button to dismiss dialog
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          backgroundColor: isDark ? Colors.grey.shade900 : Colors.white,
+          title: Text(
+            'Confirm Logout',
+            style: TextStyle(
+              color: theme.textTheme.titleLarge?.color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text(
+                  'Are you sure you want to log out?',
+                  style: TextStyle(
+                    color: theme.textTheme.bodyMedium?.color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: theme.textTheme.bodyMedium?.color,
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(); // Dismiss the dialog
+              },
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('Logout'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Dismiss the dialog
+                // Perform logout
+                final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                authProvider.logout();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Get the current user from the auth provider
@@ -55,8 +122,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           IconButton(
             onPressed: () {
-              // Logout when the user clicks this button
-              authProvider.logout();
+              // Show confirmation dialog before logout
+              _showLogoutConfirmation();
             },
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
@@ -106,4 +173,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-

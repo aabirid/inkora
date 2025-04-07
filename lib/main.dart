@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:inkora/providers/auth_provider.dart';
 import 'package:inkora/providers/follow_provider.dart';
 import 'package:inkora/providers/forum_data_provider.dart';
-import 'package:inkora/screens/auth/login_page.dart';
+import 'package:inkora/screens/auth/welcome_page.dart';
 import 'package:inkora/services/mock_data_service.dart';
 import 'package:inkora/theme/theme.dart';
 import 'package:provider/provider.dart';
@@ -13,7 +13,6 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => FollowProvider()),
         ChangeNotifierProvider(create: (_) => FollowProvider()),
         ChangeNotifierProvider(create: (_) => MockDataService()),
         ChangeNotifierProxyProvider<AuthProvider, ForumDataProvider>(
@@ -52,7 +51,7 @@ class MyApp extends StatelessWidget {
               if (authProvider.isAuthenticated) {
                 return HomeScreen(themeNotifier: themeNotifier);
               } else {
-                return const LoginPage();
+                return const WelcomePage();
               }
             },
           ),
